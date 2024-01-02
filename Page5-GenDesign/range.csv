@@ -1,0 +1,5 @@
+﻿,DragCoeff,FrontSurface,TorqueMultiplier,VehicleMass,Wheelbase
+Value,0.8,1.33,1,796,3.6
+Min,0.7,1,0.8,750,3
+Max,1,2,1.5,900,4
+Initial,0.8,1.33,1.2,796,3.6
