@@ -271,11 +271,11 @@ with st.expander('Data visualisation',expanded=True):
         st.session_state.year = st.slider(
             'Select season',2022,2023,2023)
         st.session_state.race = st.slider(
-            'Select races',1,22,6)
+            f'Select races: {st.session_state.race_name}',1,22,6)
         GetRaceInfo() 
 
         st.session_state.lap = st.slider(
-                    f'Select races: {st.session_state.race_name}',1,st.session_state.total_laps,51)
+                    f'Select lap:',1,st.session_state.total_laps,51)
         
         st.write("")
         st.subheader("Race info")
