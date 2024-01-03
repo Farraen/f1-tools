@@ -25,7 +25,7 @@ with col11:
 
     if st.button('Open tool', use_container_width=True,key=1):
         switch_page("PU Optimisation")
-    image = read_image("Page0/Image_1.png")
+    image = read_image("images/Image_1.png")
     st.image(image)
     st.subheader('PU Selection Decision Engine')
     st.write('A decision engine for optimising PU selection for the whole season.\
@@ -35,7 +35,7 @@ with col11:
 with col21:
     if st.button('Open tool', use_container_width=True,key=2):
         switch_page("AI Race Engineer")
-    image = read_image("Page0/Image_2.png")
+    image = read_image("images/Image_2.png")
     st.image(image)
     st.subheader('AI Race Engineer')
     st.write('A race telemetry analysis tool using LLM (Large Language Model) to \
@@ -45,7 +45,7 @@ with col21:
 with col31:
     if st.button('Open tool', use_container_width=True,key=3):
         switch_page("Combustion Strategy")
-    image = read_image("Page0/Image_3.png")
+    image = read_image("images/Image_3.png")
     st.image(image)
     st.subheader('Model Parameter Tuner')
     st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
@@ -61,7 +61,7 @@ gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 with col12:
     if st.button('Open tool', use_container_width=True,key=4):
         switch_page("Anomaly Estimation")
-    image = read_image("Page0/Image_4.png")
+    image = read_image("images/Image_4.png")
     st.image(image)
     st.subheader('')
     st.subheader('Anomaly Detection Testing Tool')
@@ -71,7 +71,7 @@ with col12:
 with col22:
     if st.button('Open tool', use_container_width=True,key=5):
         switch_page("Generative Design")
-    image = read_image("Page0/Image_4.png")
+    image = read_image("images/Image_4.png")
     st.image(image)
     st.subheader('')
     st.subheader('AI Designer (Generative Design)')

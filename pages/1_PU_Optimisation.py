@@ -18,19 +18,19 @@ from PIL import Image
 
 
 # System cache
-if 'fitness_trace' not in st.session_state:
-    st.session_state.fitness_trace = []
+if 'pu_fitness_trace' not in st.session_state:
+    st.session_state.pu_fitness_trace = []
 
-if 'results' not in st.session_state:
-    st.session_state.results = []
+if 'pu_results' not in st.session_state:
+    st.session_state.pu_results = []
 
-if 'track' not in st.session_state:
-    st.session_state.track = []
+if 'pu_track' not in st.session_state:
+    st.session_state.pu_track = []
 
 st.session_state.bias = []
 st.session_state.track_placeholder = []
 st.session_state.trackfinal_placeholder = []
-st.session_state.iter_placeholder = []
+st.session_state.pu_iter_placeholder = []
 st.session_state.iterCompare_placeholder = []
 st.session_state.PUCompare_placeholder = []
 
@@ -40,9 +40,9 @@ st.session_state.PUCompare_placeholder = []
 def plot_results():
 
     # Load last result
-    if isinstance(st.session_state.results, dict):
-        key = list(st.session_state.results)[-1]
-        dt_track = st.session_state.results[key]
+    if isinstance(st.session_state.pu_results, dict):
+        key = list(st.session_state.pu_results)[-1]
+        dt_track = st.session_state.pu_results[key]
         dt_track = dt_track.drop(['No','DamageThisRace'], axis=1)
 
         dt_track_styled = dt_track.style.set_properties(subset=['PU Allocation'], **{'background-color': 'darkblue'})
@@ -57,7 +57,7 @@ def plot_results():
             else:
                 flag = False
 
-            dts = st.session_state.results[i]
+            dts = st.session_state.pu_results[i]
             fig.add_trace(go.Scatter(
                 y=dts['RUL'],
                 mode='lines',
@@ -101,7 +101,7 @@ def plot_results():
             else:
                 flag = False
 
-            dts = st.session_state.results[i]
+            dts = st.session_state.pu_results[i]
 
             MaxPowerReduced1 = np.max(dts.loc[np.where(dts['PU Allocation'] == 1)[0],'PowerReduced'].to_numpy())
             MaxPowerReduced2 = np.max(dts.loc[np.where(dts['PU Allocation'] == 2)[0],'PowerReduced'].to_numpy())
@@ -177,7 +177,7 @@ elif st.session_state.bias == 'Longer RUL':
 else:
     st.session_state.bias = int(st.session_state.bias)
 
-st.session_state.iter_placeholder = col2.empty()
+st.session_state.pu_iter_placeholder = col2.empty()
 
 st.header('Results')
 col11, dcol, col22 = st.columns([1,0.1,0.9])
@@ -193,17 +193,17 @@ col22.write('Plot shows the power loss due to degradation for all power units')
 st.session_state.PUCompare_placeholder = col22.empty()
 
 
-st.write('Copyright © 2023 Farraen. All rights reserved.')
+st.write('Copyright © 2024 Farraen. All rights reserved.')
 
 
 
 # Reload data if available
 
 # Load in track information
-if not isinstance(st.session_state.track,pd.DataFrame):
-    st.session_state.track = pd.read_excel('Page1/track.xlsx')
+if not isinstance(st.session_state.pu_track,pd.DataFrame):
+    st.session_state.pu_track = pd.read_excel('data/Page1_track.xlsx')
 
-st.session_state.track = st.session_state.track_placeholder.data_editor(st.session_state.track,use_container_width=True)
+st.session_state.pu_track = st.session_state.track_placeholder.data_editor(st.session_state.pu_track,use_container_width=True)
 plot_results()
 
 
@@ -211,17 +211,17 @@ plot_results()
 
 
 
-dta = pd.DataFrame(st.session_state.fitness_trace,columns=["value"])
+dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(
     y=dta['value'],
     mode='markers+lines',
 ))
-st.session_state.iter_placeholder.plotly_chart(fig)
+st.session_state.pu_iter_placeholder.plotly_chart(fig)
 fig.update_yaxes(title_text='Fitness Value')
 fig.update_xaxes(title_text='Generation')
-st.session_state.iter_placeholder.plotly_chart(fig,use_container_width=True)
+st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True)
 
 
 def interp2(X,Y,Z,Xv,Yv):
@@ -238,7 +238,7 @@ def interp2(X,Y,Z,Xv,Yv):
 
 def DamageModel(x):
 
-    dtt  = st.session_state.track
+    dtt  = st.session_state.pu_track
 
     ICE_RUL  = [80, 70, 95]
     ICE_KW  = [425, 400, 450]
@@ -343,12 +343,12 @@ def fitness_func(ga_instance, solution, solution_idx):
 
 
 def on_start(ga_instance):
-    st.session_state.fitness_trace = []
-    st.session_state.results = {data: [] for data in range(1,ga_instance.num_generations)}
+    st.session_state.pu_fitness_trace = []
+    st.session_state.pu_results = {data: [] for data in range(1,ga_instance.num_generations)}
         
 def on_generation(ga_instance):
 
-    dtt = st.session_state.track
+    dtt = st.session_state.pu_track
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
     
@@ -358,10 +358,10 @@ def on_generation(ga_instance):
     dts = pd.concat([dfsol,dtt,PowerLeft["PowerLeft"],PowerReduced["PowerReduced"],RUL["RUL"]], axis=1)
     
     index = ga_instance.generations_completed
-    st.session_state.results[index] = dts
+    st.session_state.pu_results[index] = dts
 
-    st.session_state.fitness_trace.append(solution_fitness)
-    dta = pd.DataFrame(st.session_state.fitness_trace,columns=["value"])
+    st.session_state.pu_fitness_trace.append(solution_fitness)
+    dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -370,7 +370,7 @@ def on_generation(ga_instance):
     ))
     fig.update_yaxes(title_text='Fitness Value')
     fig.update_xaxes(title_text='Generation')
-    st.session_state.iter_placeholder.plotly_chart(fig,use_container_width=True)
+    st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True)
 
 
 

@@ -15,3 +15,9 @@ def read_image(img_path):
     image = np.array(im)
     return image
 
+
+
+
+
+
+st.write('Copyright © 2024 Farraen. All rights reserved.')
