@@ -144,15 +144,17 @@ def read_image(img_path):
     return image
 
 
-with st.sidebar:
-    st.header('Damage Model')
-    st.write('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
-    image = read_image("images/pu_damage_model.PNG")
-    st.image(image)
+
 
 st.title('Farraen\'s PU Decision Engine Playground')
 st.write('A virtual environment to test Genetic Algorithm for optimising PU selection')
 st.write('Adapted from Farraen\'s 2018 Matlab GA PU script into Python. Results may vary due to to the GA library behaviour.')
+
+with st.expander('Damage model',expanded=False):
+    st.header('Damage Model')
+    st.write('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
+    image = read_image("images/pu_damage_model.PNG")
+    st.image(image)
 
 col1, dcol, col2 = st.columns([1,0.1,1])
 col1.header('2018 Track information')
