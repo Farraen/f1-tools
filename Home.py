@@ -71,7 +71,7 @@ with col12:
 with col22:
     if st.button('Open tool', use_container_width=True,key=5):
         switch_page("Generative Design")
-    image = read_image("images/Image_4.png")
+    image = read_image("images/Image_5.png")
     st.image(image)
     st.subheader('')
     st.subheader('AI Designer (Generative Design)')
