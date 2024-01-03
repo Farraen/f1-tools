@@ -271,7 +271,7 @@ with st.expander('Data visualisation',expanded=True):
         st.session_state.year = st.slider(
             'Select season',2022,2023,2023)
         st.session_state.race = st.slider(
-            f'Select races: {st.session_state.race_name}',1,22,6)
+            f'Select races:',1,22,6)
         GetRaceInfo() 
 
         st.session_state.lap = st.slider(
@@ -281,6 +281,7 @@ with st.expander('Data visualisation',expanded=True):
         st.subheader("Race info")
         st.write("Selected race metrics. The time delta is between previous and current lap time.")
 
+        st.text(f'Selected race: {st.session_state.race_name}')
         row1,row2,row3 = st.columns([1,1,1],gap="medium")
         with row1:
             metric1_placeholder = st.metric("Driver", Driver)        
