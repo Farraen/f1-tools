@@ -201,11 +201,10 @@ st.write('Copyright © 2023 Farraen. All rights reserved.')
 
 # Load in track information
 if not isinstance(st.session_state.track,pd.DataFrame):
-    st.session_state.track = pd.read_excel('track.xlsx')
+    st.session_state.track = pd.read_excel('Page1/track.xlsx')
 
 st.session_state.track = st.session_state.track_placeholder.data_editor(st.session_state.track,use_container_width=True)
 plot_results()
-
 
 
 

@@ -1,9 +1,8 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 from PIL import Image
+from streamlit_extras.switch_page_button import switch_page
 
-import time
 
 st.set_page_config(layout="wide")
 
@@ -21,10 +20,11 @@ st.header(' ')
 gap_size = 0.05
 gap,col11,gap,col21,gap,col31,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
 
+
 with col11:
 
-    link = 'https://farraen-pu-ga-index-ptnqiv.streamlit.app/'
-    button_1 = st.link_button('Open tool', link, use_container_width=True)
+    if st.button('Open tool', use_container_width=True,key=1):
+        switch_page("PU Optimisation")
     image = read_image("Page0/Image_1.png")
     st.image(image)
     st.subheader('PU Selection Decision Engine')
@@ -33,8 +33,8 @@ with col11:
              aritificial damage model to calculate vehicle performance degradation.')
     
 with col21:
-    link = 'https://farraen-pu-ga-index-ptnqiv.streamlit.app/'
-    button_2 = st.link_button('Open tool', link, use_container_width=True)
+    if st.button('Open tool', use_container_width=True,key=2):
+        switch_page("AI Race Engineer")
     image = read_image("Page0/Image_2.png")
     st.image(image)
     st.subheader('AI Race Engineer')
@@ -43,8 +43,8 @@ with col21:
              power of LLM to extract instructions from a user prompt.')
 
 with col31:
-    link = 'https://farraen-combustion-optimiser-main-rkriwj.streamlit.app/'
-    button_3 = st.link_button('Open tool', link, use_container_width=True)
+    if st.button('Open tool', use_container_width=True,key=3):
+        switch_page("Combustion Strategy")
     image = read_image("Page0/Image_3.png")
     st.image(image)
     st.subheader('Model Parameter Tuner')
@@ -59,8 +59,8 @@ st.header(' ')
 gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
 
 with col12:
-    link = 'https://farraen-pu-ga-index-ptnqiv.streamlit.app/'
-    button_4 = st.link_button('Open tool', link, use_container_width=True)
+    if st.button('Open tool', use_container_width=True,key=4):
+        switch_page("Anomaly Estimation")
     image = read_image("Page0/Image_4.png")
     st.image(image)
     st.subheader('')
@@ -69,9 +69,9 @@ with col12:
              vehicle measurement data.')
     
 with col22:
-    link = 'https://farraen-pu-ga-index-ptnqiv.streamlit.app/'
-    button_5 = st.link_button('Open tool', link, use_container_width=True)
-    image = read_image("Page0/Image_5.png")
+    if st.button('Open tool', use_container_width=True,key=5):
+        switch_page("Generative Design")
+    image = read_image("Page0/Image_4.png")
     st.image(image)
     st.subheader('')
     st.subheader('AI Designer (Generative Design)')
