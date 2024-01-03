@@ -15,8 +15,6 @@ import scipy.io
 from sklearn.preprocessing import MinMaxScaler
 
 
-clear = lambda: os.system('cls')
-clear()
 
 # Dashboard layout
 st.set_page_config(layout="wide")
@@ -93,37 +91,43 @@ st.session_state.df = df
 arr = df.loc[['Min','Max'],:]
 
 
+st.markdown("""
+<style>
+.title_medium {
+    font-size:20px !important;
+}
+ .text_small {
+    font-size:12px !important;
+}           
+</style>
+""", unsafe_allow_html=True)
+
+def st_title(text):
+    st.markdown(f'<p class="title_medium">{text}</p>', unsafe_allow_html=True)
+
+def st_text(text):
+    st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
+
+
+
 # Build dashboard
-st.title('Racing Vehicle Optimiser')
-st.subheader('A hobby project to optimise racing vehicle performance using generative design')
+st.subheader('Racing Vehicle Optimiser')
 
 with st.expander('Introduction', expanded=False):
+
     col1,col2 = st.columns([1,1])
     with col1:
-        st.write('A prototype decision making algorithm for determining best vehicle designs for maximum vehicle performance. \
+        st_text('A prototype decision making algorithm for determining best vehicle designs for maximum vehicle performance. \
                 The optimiser automatically finds best solutions while constraining to maximum vehicle durability. The dashboard uses a \
                 decision tree regression model for predicting vehicle performance particularly the vehicle acceleration. ')
-        st.write('The first half of the dashboard is for manually tuning the parameters. Observe the vehicle speed trace while  \
+        st_text('The first half of the dashboard is for manually tuning the parameters. Observe the vehicle speed trace while  \
                 moving the sliders. The next section is to generate several vehicle designs using an optimiser. Hover the mouse on top \
                 of the scatter plot to inspec the designs.')
     with col2:
         image = read_image("images/Page5_model.png")
         st.image(image)
 
-col1,gap,col2,gap,col3 = st.columns([0.7,0.1,0.3,0.05,1])
-
-
-with col1:
-    st.subheader('Vehicle parameters')
-    param_dict = {}
-    for name in df.columns:
-        init = st.session_state.solution_best[name]
-        param_dict[name] = st.slider(name,np.double(df[name].Min), np.double(df[name].Max), np.double(init),key=name)
-    st.session_state.solution_best = param_dict
-
-with col2:
-
-    st.subheader('Controls')
+with st.expander('Settings', expanded=False):
     genre = st.radio(
         "Choose test mode",
         ["0-100kmh", "0-200kmh", "Max"],index=1)
@@ -135,58 +139,66 @@ with col2:
     else:
         mode = 500.0
 
+with st.expander('Performance visualisation', expanded=True):
 
-    st.subheader('Performance')
-    metric1 = st.empty()
-    metric2 = st.empty()
-    metric3 = st.empty()
-    metric4 = st.empty()
+    col1,col2 = st.columns([0.4,1])
+    with col1:
+        st_title('Vehicle parameters')
+        param_dict = {}
+        for name in df.columns:
+            init = st.session_state.solution_best[name]
+            param_dict[name] = st.slider(name,np.double(df[name].Min), np.double(df[name].Max), np.double(init),key=name)
+        st.session_state.solution_best = param_dict
 
-
-with col3:
-
-    st.subheader('Vehicle speed plot')
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=[0],
-        y=[0],
-        mode='markers',
-        opacity=0.5,
-        marker = dict(color = "LightSkyBlue", size = 15, opacity = 0.8),
-    ))
-
-    fig.update_layout(
-        yaxis_title='Vehicle speed (kmh)',
-        xaxis_title='Time',
-        showlegend=True)   
-    plot_placeholder = st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
+    with col2:
+        st_title('Performance metrics')
+        col11,col22,col33,col44 = st.columns([1,1,1,1])
+        metric1 = col11.empty()
+        metric2 = col22.empty()
+        metric3 = col33.empty()
+        metric4 = col44.empty()
 
 
+        st_title('Vehicle speed plot')
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=[0],
+            y=[0],
+            mode='markers',
+            opacity=0.5,
+            marker = dict(color = "LightSkyBlue", size = 15, opacity = 0.8),
+        ))
+
+        fig.update_layout(
+            yaxis_title='Vehicle speed (kmh)',
+            xaxis_title='Time',
+            showlegend=True)   
+        plot_placeholder = st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
 
 
-col1,gap,col2 = st.columns([0.8,0.05,1])
-with col1:
+with st.expander('Performance optimisation', expanded=True):
 
 
-    st.subheader('Optimiser')
-    st.subheader('')
-    start_target, end_target = st.select_slider(
-        'Select optimisation target',
-        options=['Durability', '1', '2', '3', '4', '5', '6', '7', '8', '9','10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'Performance'],
-        value=('Durability', 'Performance'))
-    range_list = handle_range(start_target, end_target)
-    st.session_state.gen_number = st.number_input("Number of generation", value=10, placeholder="Type a number...")
+    col1,gap,col2 = st.columns([0.8,0.05,1])
+    with col1:
 
-    generate = st.button('Generate designs')
+        st_title('Objectives')
+        start_target, end_target = st.select_slider(
+            'Select optimisation target',
+            options=['Durability', '1', '2', '3', '4', '5', '6', '7', '8', '9','10', '11', '12', '13', '14', '15', '16', '17', '18', '19', 'Performance'],
+            value=('Durability', 'Performance'))
+        range_list = handle_range(start_target, end_target)
+        st.session_state.gen_number = st.number_input("Number of generation", value=10, placeholder="Type a number...")
 
-    my_bar = st.empty()
+        generate = st.button('Generate designs')
+        my_bar = st.empty()
 
-    st.subheader('Function Objective')
-    optim_plot_placeholder = st.empty()
+    with col2:
+        st_title('Function Objective')
+        optim_plot_placeholder = st.empty()
 
-
-with col2:
-    st.subheader('Vehicle designs')
+    st.write("")
+    st_title('Vehicle designs')
     st.subheader('')
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -203,10 +215,8 @@ with col2:
         showlegend=True)   
     fig.update_layout(xaxis_range=[0,1])
     fig.update_layout(yaxis_range=[0,1])
-    fig.update_layout(height=800)
-    pareto_placeholder = st.plotly_chart(fig, theme="streamlit")  
-    pareto_placeholder.plotly_chart(fig,height=800, use_container_width=True)
-
+    fig.update_layout(height=400,margin=dict(l=20, r=20, t=20, b=20))
+    pareto_placeholder = st.plotly_chart(fig, theme="streamlit", use_container_width=True,height=400)  
 
 def simulate(inputs):
     t = np.arange(0, 12, 0.01)
@@ -270,7 +280,8 @@ def plot_fitness():
         yaxis_title='Cost Value',
         xaxis_title='Iteration')     
 
-    optim_plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True)  
+    fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
+    optim_plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True,height=250)  
 
 plot_fitness()
 
@@ -309,7 +320,7 @@ def plot():
         mode='lines',
         name='Baseline',
         opacity=0.5,
-        line = dict(color = "LightSkyBlue", width = 5),
+        line = dict(color = "white", width = 5),
     ))
     fig.add_trace(go.Scatter(
         x=t_mod_fil,
@@ -317,7 +328,7 @@ def plot():
         mode='lines',
         name='Optimised',
         opacity=0.5,
-        line = dict(color = "Cyan", width = 5),
+        line = dict(color = "blue", width = 5),
     ))
     if mode == 100:
         fig.update_layout(xaxis_range=[0,6])
@@ -333,9 +344,8 @@ def plot():
         yaxis_title='Vehicle speed (km/h)',
         xaxis_title='Time',
         showlegend=True)   
-    fig.update_layout(height=600)
-    plot_placeholder.plotly_chart(fig,height=600)
-    plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True) 
+    fig.update_layout(height=400,margin=dict(l=20, r=20, t=20, b=20))
+    plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True,height=400) 
 
 
     t_100_base = t_base_fil[find_nearest(v_base_fil,100)]
@@ -346,17 +356,15 @@ def plot():
     v_max_mod = np.round(v_mod_full[find_nearest(t_mod_full,12)],1)
     dmax = np.round(v_max_mod-v_max_base,2)
 
-
-
     durab_base, perf_base = DamageModel(st.session_state.solution_baseline,v_max_base,t_100_base)
     durab_mod, perf_mod = DamageModel(st.session_state.solution_best,v_max_mod,t_100_mod)
-    ddurab = np.round(durab_mod-durab_base,2)
-    dperf = np.round(perf_mod-perf_base,2)
+    ddurab = np.round(durab_mod-durab_base,1)
+    dperf = np.round(perf_mod-perf_base,1)
 
-    metric1.metric("0-100kmh", f"{t_100_mod} s", f"{dt_100} s")
-    metric2.metric("Top speed", f"{v_max_mod} km/h", f"{dmax} km/h")
-    metric3.metric("Durability", f"{durab_mod} %", f"{ddurab} %")
-    metric4.metric("Performance", f"{perf_mod} %", f"{dperf} %")
+    metric1.metric("0-100kmh (s)", "%.2f" % t_100_mod, "%.2f" % dt_100)
+    metric2.metric("Top speed (km/h)", "%.1f" % v_max_mod, "%.1f" % dmax)
+    metric3.metric("Durability (%)", "%.1f" % durab_mod,"%.1f" % ddurab)
+    metric4.metric("Performance (%)", "%.1f" % perf_mod, "%.1f" % dperf)
 
 
 plot()
@@ -457,27 +465,93 @@ if generate:
     
     st.write(st.session_state.results)
 
-
 df = st.session_state.results
+
+
+def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
+    '''Pareto frontier selection process'''
+    sorted_list = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxY)
+    pareto_front = [sorted_list[0]]
+    for pair in sorted_list[1:]:
+        if maxY:
+            if pair[1] >= pareto_front[-1][1]:
+                pareto_front.append(pair)
+        else:
+            if pair[1] <= pareto_front[-1][1]:
+                pareto_front.append(pair)
+    pf_X = [pair[0] for pair in pareto_front]
+    pf_Y = [pair[1] for pair in pareto_front]
+    
+    return pf_X, pf_Y
+
+t_base_fil, v_base_fil, t_base_full, v_base_full = simulate(st.session_state.solution_baseline)
+t_100_base = t_base_fil[find_nearest(v_base_fil,100)]
+v_max_base = v_base_full[find_nearest(t_base_full,12)]
+durab_base, perf_base = DamageModel(st.session_state.solution_baseline,v_max_base,t_100_base)
+
+
+r0 = {'Bias':0, 'Durability': durab_base, 'Performance': perf_base, 'MaxSpeed': v_max_base, '0-100km/h': t_100_base}
+r0.update(st.session_state.solution_baseline)
+df_base =  pd.DataFrame([r0])
+
 if isinstance(df,pd.DataFrame):
-    print(1)
+
+    pf_X, pf_Y = plot_pareto_frontier(df["Performance"], df["Durability"])
+
     fig = px.scatter(df,
                     x="Performance",
                     y="Durability",
                     color="0-100km/h",
-                    hover_data=['Bias','MaxSpeed','DragCoeff','FrontSurface','TorqueMultiplier','VehicleMass','Wheelbase']
+                    hover_data={'Durability':':.1f%','Performance':':.1f%','Bias':True,'MaxSpeed':True,'DragCoeff':':.2f','FrontSurface':True,'TorqueMultiplier':':.2f','VehicleMass':True,'Wheelbase':True}
                     )
+    fig.update_layout(coloraxis_colorbar_title_text = '0-100km/h')
+
+    hover_select=['Bias','MaxSpeed','DragCoeff','FrontSurface','TorqueMultiplier','VehicleMass','Wheelbase','0-100km/h']
+
+    fig.add_trace(go.Scatter(
+                x=pf_X,
+                y=pf_Y,
+                mode='lines',
+                name="Pareto front",
+                line=dict(width=2, color='red'),
+                ))  
+
+    fig.add_trace(go.Scatter(
+                x=df_base["Performance"],
+                y=df_base["Durability"],
+                mode='markers+text',
+                line=dict(width=4, color='red'),
+                text= ["Baseline"],
+                name="Baseline",
+                textposition="top right",
+                customdata=df_base[hover_select].values.tolist(),
+                hovertemplate =
+                    'Performance: %{y:.1f}%'+
+                    '<br>Durability</b>: %{x:.1f}%'+
+                    '<br>Bias</b>: %{customdata[0]}'+
+                    '<br>MaxSpeed</b>: %{customdata[1]:.1f}'+
+                    '<br>DragCoeff</b>: %{customdata[2]}'+
+                    '<br>FrontSurface</b>: %{customdata[3]}'+
+                    '<br>TorqueMultiplier</b>: %{customdata[4]}'+
+                    '<br>VehicleMass</b>: %{customdata[5]}'+
+                    '<br>Wheelbase</b>: %{customdata[6]}'+
+                    '<br>0-100km/h</b>: %{customdata[7]}',
+                ))
+
+
+
+
     fig.update_traces(marker={'size': 20})
-    fig.update_layout(height=800)
-    pareto_placeholder.plotly_chart(fig,height=800)
-    pareto_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True)  
+    fig.update_layout(height=400,margin=dict(l=20, r=20, t=20, b=20),showlegend=True)
 
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.11,
+        xanchor="left",
+        x=1.01
+    ))
 
-
-st.write('Copyright © 2023 Farraen. All rights reserved.')
-
-
-
+    pareto_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True,height=400)  
 
 
 st.write('Copyright © 2024 Farraen. All rights reserved.')
