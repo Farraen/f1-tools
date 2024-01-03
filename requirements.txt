@@ -1,7 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
-streamlit=1.29.0=pypi_0
-streamlit-extras=0.3.6=pypi_0
 
+numpy=1.23.5=pypi_0
+pandas=1.5.3=pypi_0
 
