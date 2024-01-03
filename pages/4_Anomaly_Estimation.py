@@ -314,9 +314,13 @@ with st.expander('Data visualisation',expanded=True):
 
 with st.expander('Visualisation canvas',expanded=True):
 
-    st_text(" ")
-    st_text("Add the current race (blue line) into anomaly training list:")
-    select_button = st.button('Add',key="add")
+    col1, col2 = st.columns([1,0.8])
+    with col1:
+        st.write("Add the current race (blue line) into anomaly training list:")
+        select_button = st.button('Add',key="add")
+    with col2:
+        st.write(f"Legend:  \n ---- : Historical  \n  :blue[----] : Training  \n  🟡 : Anomalies")
+
 
     if not st.session_state.analysis_figure:
         fig2 = go.Figure()
@@ -492,12 +496,15 @@ def UpdatePlots(df_select):
     fig = PlotTelemetry(fig,df,ToPlot,"deepskyblue",1,f"Lap {lap}")
     fig = PlotAnomaly(fig,df,ToPlot,f"Lap {lap}",t_outliers)
 
-    names = set()
-    fig.for_each_trace(
-        lambda trace:
-            trace.update(showlegend=False)
-            if (trace.name in names) else names.add(trace.name))
+    # Make legend unique
+    #names = set()
+    #fig.for_each_trace(
+    #    lambda trace:
+    #        trace.update(showlegend=False)
+    #        if (trace.name in names) else names.add(trace.name))
 
+    # Hide legend for now
+    fig.update_layout(showlegend=False)
     fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
     fig.update_layout(height=st.session_state.PlotHeight)
 
