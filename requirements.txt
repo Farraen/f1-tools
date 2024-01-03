@@ -1,30 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
-catboost=1.2.2=py39h6e9494a_0
-matplotlib=3.8.0=pypi_0
-numpy=1.23.5=pypi_0
-pandas=1.5.3=pypi_0
-pip=23.3.1=py39hecd8cb5_0
-plotly=5.17.0=pypi_0
-pygad=3.1.0=pypi_0
-pymongo=4.6.1=pypi_0
-scikit-base=0.5.1=pypi_0
-scikit-image=0.21.0=pypi_0
-scikit-learn=1.2.2=pypi_0
-scikit-learn-intelex=2023.2.1=pypi_0
-scikit-optimize=0.9.0=pypi_0
-scikit-plot=0.3.7=pypi_0
-scipy=1.10.1=py39h4c5e66d_2
-seaborn=0.12.2=pypi_0
 streamlit=1.29.0=pypi_0
-streamlit-camera-input-live=0.2.0=pypi_0
-streamlit-card=1.0.0=pypi_0
-streamlit-embedcode=0.1.2=pypi_0
 streamlit-extras=0.3.6=pypi_0
-streamlit-faker=0.0.3=pypi_0
-streamlit-image-coordinates=0.1.6=pypi_0
-streamlit-keyup=0.2.2=pypi_0
-streamlit-toggle-switch=1.0.2=pypi_0
-streamlit-vertical-slider=2.5.5=pypi_0
+
 
