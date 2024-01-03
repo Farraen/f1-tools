@@ -6,7 +6,7 @@ from PIL import Image
 import time
 
 st.set_page_config(layout="wide")
-st.title('Farraen\'s F1 Tools')
+st.title('AI Race Engineer')
 
 # For loading images
 @st.cache_resource
