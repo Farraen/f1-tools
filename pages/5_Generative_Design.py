@@ -99,7 +99,9 @@ st.markdown("""
  .text_small {
     font-size:12px !important;
 }           
+
 </style>
+
 """, unsafe_allow_html=True)
 
 def st_title(text):
@@ -218,6 +220,13 @@ with st.expander('Performance optimisation', expanded=True):
     fig.update_layout(height=400,margin=dict(l=20, r=20, t=20, b=20))
     pareto_placeholder = st.plotly_chart(fig, theme="streamlit", use_container_width=True,height=400)  
 
+    st_title("Baseline performance and design")
+    baseline_table_placeholder = st.empty()
+
+    st_title("Optimised performance and design")
+    optimised_table_placeholder = st.empty()
+
+
 def simulate(inputs):
     t = np.arange(0, 12, 0.01)
     #fmu = 'VehicleModel.fmu'
@@ -305,7 +314,6 @@ def DamageModel(s0,vmax,tacc):
     x5 = -10*s0['FrontSurface']/2
     performance = np.round(100+x1+x2+x3+x4+x5,2)
 
-
     return durability, performance
 
 def plot():
@@ -365,6 +373,22 @@ def plot():
     metric2.metric("Top speed (km/h)", "%.1f" % v_max_mod, "%.1f" % dmax)
     metric3.metric("Durability (%)", "%.1f" % durab_mod,"%.1f" % ddurab)
     metric4.metric("Performance (%)", "%.1f" % perf_mod, "%.1f" % dperf)
+
+def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
+    '''Pareto frontier selection process'''
+    sorted_list = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxY)
+    pareto_front = [sorted_list[0]]
+    for pair in sorted_list[1:]:
+        if maxY:
+            if pair[1] >= pareto_front[-1][1]:
+                pareto_front.append(pair)
+        else:
+            if pair[1] <= pareto_front[-1][1]:
+                pareto_front.append(pair)
+    pf_X = [pair[0] for pair in pareto_front]
+    pf_Y = [pair[1] for pair in pareto_front]
+    
+    return pf_X, pf_Y
 
 
 plot()
@@ -468,31 +492,26 @@ if generate:
 df = st.session_state.results
 
 
-def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
-    '''Pareto frontier selection process'''
-    sorted_list = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxY)
-    pareto_front = [sorted_list[0]]
-    for pair in sorted_list[1:]:
-        if maxY:
-            if pair[1] >= pareto_front[-1][1]:
-                pareto_front.append(pair)
-        else:
-            if pair[1] <= pareto_front[-1][1]:
-                pareto_front.append(pair)
-    pf_X = [pair[0] for pair in pareto_front]
-    pf_Y = [pair[1] for pair in pareto_front]
-    
-    return pf_X, pf_Y
 
+# Prep baseline results
 t_base_fil, v_base_fil, t_base_full, v_base_full = simulate(st.session_state.solution_baseline)
 t_100_base = t_base_fil[find_nearest(v_base_fil,100)]
 v_max_base = v_base_full[find_nearest(t_base_full,12)]
 durab_base, perf_base = DamageModel(st.session_state.solution_baseline,v_max_base,t_100_base)
 
-
 r0 = {'Bias':0, 'Durability': durab_base, 'Performance': perf_base, 'MaxSpeed': v_max_base, '0-100km/h': t_100_base}
 r0.update(st.session_state.solution_baseline)
 df_base =  pd.DataFrame([r0])
+
+baseline_table_placeholder.write(df_base)
+
+if isinstance(df,pd.DataFrame):
+    optimised_table_placeholder.write(df)
+else:
+    df_empty = pd.DataFrame([],columns=df_base.columns)
+    optimised_table_placeholder.write(df_empty)
+
+
 
 if isinstance(df,pd.DataFrame):
 

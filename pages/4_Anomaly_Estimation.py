@@ -22,6 +22,26 @@ import pickle
 
 st.set_page_config(layout="wide")
 
+st.markdown("""
+<style>
+.title_medium {
+    font-size:20px !important;
+}
+ .text_small {
+    font-size:12px !important;
+}           
+
+</style>
+
+""", unsafe_allow_html=True)
+
+def st_title(text):
+    st.markdown(f'<p class="title_medium">{text}</p>', unsafe_allow_html=True)
+
+def st_text(text):
+    st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
+
+
 cols2 = plotly.colors.DEFAULT_PLOTLY_COLORS
 cols = px.colors.qualitative.Light24
 
@@ -33,7 +53,6 @@ if 'df_laps' not in st.session_state:
 
 if 'selected' not in st.session_state:
     st.session_state.selected = []
-
 
 if 'year' not in st.session_state:
     st.session_state.year = []
@@ -50,7 +69,10 @@ if 'total_laps' not in st.session_state:
 
 if 'select' not in st.session_state:
     #st.session_state.select = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
-    st.session_state.select = pd.read_pickle("data/Page4_init.pkl")  
+    df = pd.read_pickle("data/Page4_init.pkl")  
+    #df.columns = ["Lap", "Lap time", "Position", "Compound", "Training","Remove"]
+    st.session_state.select = df
+    #df.to_pickle("./Page4_init.pkl")
 
 if 'analysis_figure' not in st.session_state:
     st.session_state.analysis_figure = []
@@ -114,7 +136,6 @@ def load_model():
     return model, scaler
 
 
-
 # Initialise
 
 # Load anomaly detection model
@@ -124,12 +145,12 @@ st.session_state.features = ["Distance","RPM","Speed","Throttle"]
 
 
 # Plot settings
-st.session_state.PlotHeight = 1300
+st.session_state.PlotHeight = 1000
 
 # Calculate legend offset
-n_legend = 4
+n_legend = 3
 y0 = 0.234*st.session_state.PlotHeight - 57.67
-y1 = 0.044*st.session_state.PlotHeight - 9.67 - 2 + 10
+y1 = 0.044*st.session_state.PlotHeight - 9.67 -40
 legend_y = -18.88 * n_legend + y0 - y1
 
 if n_legend < 3:
@@ -190,7 +211,10 @@ def PlotTelemetry(fig2,df,ToPlot,cc,trans,name):
         fig2.update_yaxes(title_text=channel, row=index+1, col=1)
 
         if index+1==len(ToPlot):
-            fig2.update_xaxes(rangeslider= {'visible':True}, row=index+1, col=1)
+
+            fig2.update_xaxes(rangeslider= {'visible':True}, row=index+1, col=1,rangeslider_thickness = 0.05)
+
+
 
         if legend_y>20:
             fig2.update_layout(legend_tracegroupgap=legend_y)
@@ -225,48 +249,41 @@ def PlotAnomaly(fig2,df,ToPlot,name,t_outliers):
     return fig2         
 
 
-st.header("F1 Anomaly Detection")
-st.subheader("Farraen's experimental racing tools")
-st.write("(For hobby and recreational purposes only)")
-st.header(' ')
+st.subheader("F1 Anomaly Estimator")
 
+with st.expander('Introduction',expanded=True):
 
-col1,col2 = st.columns([1,0.3])
-with col1:
-    with st.expander('Introduction',expanded=True):
-        col11,col22 = st.columns([0.25,1])
-        with col11:
-            str3 = "This is a dashboard for extracting Max's race telemetry data and detecting anomalies to identify faults early.\
-                 It involves a relatively basic anomaly detection process due to the limited amount of telemetry data available."
-            st.write(str3)
-            str3 = "A MongoDB database was set up to store telemetry data for all 2022 and 2023 races. \
-                MongoDB is a document-oriented database, and data is stored as JSON documents. \
-                    The database is connected via an API over the internet to the dashboard."
-            st.write(str3)
-            str3 = "For detecting anomalies, the LOF (Local Outlier Factor) algorithm is used. \
-                It is trained using several historical telemetry data points and is employed to predict new, unseen data."
-            st.write(str3)
+    str3 = "This is a dashboard for extracting Max's race telemetry data and detecting anomalies to identify faults early.\
+            It involves a relatively basic anomaly detection process due to the limited amount of telemetry data available."
+    st.write(str3)
+    str3 = "A MongoDB database was set up to store telemetry data for all 2022 and 2023 races. \
+        MongoDB is a document-oriented database, and data is stored as JSON documents. \
+            The database is connected via an API over the internet to the dashboard."
+    st.write(str3)
+    str3 = "For detecting anomalies, the LOF (Local Outlier Factor) algorithm is used. \
+        It is trained using historical telemetry data and is employed to predict new, unseen data."
+    st.write(str3)
 
-        with col22:
-            image = read_image("images/Page4_tech.png")
-            st.image(image,use_column_width=True)
-with col2:
-    with st.expander('MongoDB database',expanded=True):
-        st.info('Status: ' + st.session_state.db_status, icon="ℹ️")
-        col11,col22 = st.columns([0.5,1])
-        with col11:
-            ping_button = st.button("Ping database")
-        with col22:
-            db_stat_placeholder = st.empty()
+    image = read_image("images/Page4_tech.png")
+    st.image(image,use_column_width=True)
+
+with st.expander('MongoDB database',expanded=True):
+
+    st.info('Status: ' + st.session_state.db_status, icon="ℹ️")
+    col11,col22 = st.columns([0.5,1])
+    with col11:
+        ping_button = st.button("Ping database")
+    with col22:
+        db_stat_placeholder = st.empty()
 
 
 
 with st.expander('Data visualisation',expanded=True):
 
-    col1,col2 = st.columns([0.5,1],gap="large")
+    col1,col2 = st.columns([0.5,1],gap="medium")
     with col1:
         
-        st.subheader("Race selection")
+        st_title("Race selection")
         st.write("Select season and race using the sliders below. The selected race telemetry data will be plotted as blue in the analysis plot.")
         st.session_state.year = st.slider(
             'Select season',2022,2023,2023)
@@ -277,8 +294,8 @@ with st.expander('Data visualisation',expanded=True):
         st.session_state.lap = st.slider(
                     f'Select lap:',1,st.session_state.total_laps,51)
         
-        st.write("")
-        st.subheader("Race info")
+    with col2:
+        st_title("Race info")
         st.write("Selected race metrics. The time delta is between previous and current lap time.")
 
         st.text(f'Selected race: {st.session_state.race_name}')
@@ -295,55 +312,50 @@ with st.expander('Data visualisation',expanded=True):
         with row2:
             metric5_placeholder = st.metric("Ambient temp", "")
 
-        st.write("")
-        st.subheader("Anomaly detection")
+with st.expander('Visualisation canvas',expanded=True):
 
-        str2 = "Press Add button to add the current race into the training list. \
-            Remember to use the check box to confirm the selection. Once selection has been made, \
-            press Start training button to initiate anomaly detector training process."
-        st.write(str2)
-        row1,row2,row3,row4 = st.columns([0.23,0.4,0.5,1])
-        with row1:
-            select_button = st.button('Add',key="add")
-        with row2:
-            remove_button = st.button('Remove',key="remove")
-        with row3:
-            train_button = st.button('Start training',key="train")
-        
-        test_placeholder = st.empty()
-        table_placeholder = st.empty()
-        progress_placeholder = st.empty()
+    st_text(" ")
+    st_text("Add the current race (blue line) into anomaly training list:")
+    select_button = st.button('Add',key="add")
 
-        st.write('Estimator specifications:')
-        gap,col111 = st.columns([0.01,1])
-        with col111:
-            estimator1_placeholder = st.empty()
-            estimator2_placeholder = st.empty() 
-            estimator3_placeholder = st.empty()
-            estimator4_placeholder = st.empty()
-            estimator5_placeholder = st.empty() 
-            estimator6_placeholder = st.empty()
-            estimator7_placeholder = st.empty()
-        st.write('')
+    if not st.session_state.analysis_figure:
+        fig2 = go.Figure()
+        fig2.add_trace(go.Scatter(
+            x=[0],
+            y=[0],
+            mode='lines',
+            yaxis="y",
+        ))
+        analysis_placeholder = st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+    else:
+        analysis_placeholder = st.plotly_chart(st.session_state.analysis_figure, theme="streamlit", use_container_width=True)
 
+with st.expander('Retrain anomaly estimator',expanded=True):
+    st_title("Anomaly detection")
 
-    with col2:
-        st.subheader("Visualisation canvas")
-        str2 = "This the telemetry plot. The blue lines are the current race telemety. The grey lines \
-            are the selected training data. The dark orange lines are the testing set. At the moment the testing set is not used.  \
-            The yellow markers are the detected anomalies. Use the range slider at the bottom of the plot to zoom or pan the telemetry plots."
-        st.write(str2)
-        if not st.session_state.analysis_figure:
-            fig2 = go.Figure()
-            fig2.add_trace(go.Scatter(
-                x=[0],
-                y=[0],
-                mode='lines',
-                yaxis="y",
-            ))
-            analysis_placeholder = st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
-        else:
-            analysis_placeholder = st.plotly_chart(st.session_state.analysis_figure, theme="streamlit", use_container_width=True)
+    str2 = "Press Add button to add the current race into the training list. \
+        Remember to use the check box to confirm the selection. Once selection has been made, \
+        press Start training button to initiate anomaly detector training process."
+    st.write(str2)
+    remove_button = st.button('Remove',key="remove")
+    train_button = st.button('Start training',key="train")
+
+    test_placeholder = st.empty()
+    table_placeholder = st.empty()
+    progress_placeholder = st.empty()
+
+    st.write('Estimator specifications:')
+    gap,col111 = st.columns([0.01,1])
+    with col111:
+        estimator1_placeholder = st.empty()
+        estimator2_placeholder = st.empty() 
+        estimator3_placeholder = st.empty()
+        estimator4_placeholder = st.empty()
+        estimator5_placeholder = st.empty() 
+        estimator6_placeholder = st.empty()
+        estimator7_placeholder = st.empty()
+    st.write('')
+
 
 
 if ping_button:
@@ -352,6 +364,7 @@ if ping_button:
         db_stat_placeholder.success("Pinged the telemetry. You successfully connected to MongoDB!", icon="✅")
     except Exception as e:
         db_stat_placeholder.error(e, icon="🚨")
+
 
 # Race info
 dbcol = db[f"race_{st.session_state.year}_{st.session_state.race}"]
@@ -395,14 +408,21 @@ if select_button:
     
     if not n in row0["Lap"].unique():
 
-        row = pd.DataFrame({'Lap':n,'Lap time':t_lap,'Position':p_lap,'Compound':c_lap,'Training':False,'Testing':False}, index=[0])
+        row = pd.DataFrame({'Lap':n,'Lap time':t_lap,'Position':p_lap,'Compound':c_lap,'Training':False,'Remove':False}, index=[0])
         
         if isinstance(row0,pd.DataFrame):
             st.session_state.select = pd.concat([row0, row], ignore_index=True)
         else:
             st.session_state.select = row
         
-df_select = table_placeholder.data_editor(st.session_state.select)
+
+if remove_button:
+    dfr = st.session_state.select
+    st.session_state.select = dfr[dfr['Remove'] == False]
+
+
+
+df_select = table_placeholder.data_editor(st.session_state.select,use_container_width=True)
 
 
 def AddAdditionalTelemetryData(df):
@@ -446,7 +466,7 @@ def UpdatePlots(df_select):
     for index, row in df_select.iterrows():
 
         # Skip to prevent accessing mongo
-        if (not row['Training']) and (not row['Testing']):
+        if (not row['Training']):
             continue
             
         # Read from mongo
@@ -458,10 +478,8 @@ def UpdatePlots(df_select):
         if row['Training']:
             fig = PlotTelemetry(fig,df,ToPlot,"lightgrey",0.3,f"Training")
 
-        if row['Testing']:
-            fig = PlotTelemetry(fig,df,ToPlot,"orange",0.3,f"Testing")
-
-
+        #if row['Testing']:
+        #    fig = PlotTelemetry(fig,df,ToPlot,"orange",0.3,f"Testing")
 
     # Read from mongo
     lap = st.session_state.lap
@@ -480,7 +498,9 @@ def UpdatePlots(df_select):
             trace.update(showlegend=False)
             if (trace.name in names) else names.add(trace.name))
 
+    fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
     fig.update_layout(height=st.session_state.PlotHeight)
+
 
     return fig
 
@@ -489,10 +509,7 @@ fig = UpdatePlots(df_select)
 st.session_state.analysis_figure = fig
 analysis_placeholder.plotly_chart(fig, theme="streamlit",height=1300)
 
-
-
-
-
+# Train anomalies
 if train_button:
 
     with progress_placeholder, st.spinner('Training in progress'):
