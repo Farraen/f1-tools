@@ -240,7 +240,7 @@ def PlotAnomaly(fig2,df,ToPlot,name,t_outliers):
                 line=dict(width=10, color='yellow'),
                 mode='markers',
                 yaxis="y",
-            name= f"{name} anomalies  [{channel}]",
+            name= f"Anomalies  [{channel}]",
                 opacity=1,
                 legendgroup=str(index+1),
                 showlegend = True,
