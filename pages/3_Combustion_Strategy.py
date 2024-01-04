@@ -136,7 +136,7 @@ def plot_result():
         mode='lines',
         line = dict(width = 4, color = "blue"),
         marker = dict(color = "cyan", size = 15, opacity = 0.8),
-        name = 'Optimised strategy',
+        name = 'Optimised',
     ),row=1, col=1)
 
     error = df['Pressure']-df1['Pressure']
@@ -144,6 +144,7 @@ def plot_result():
         x=df['CrkAngle'],
         y=error,
         opacity=0.5,
+        name="Error",
     ),row=2, col=1)
 
     fig.update_xaxes(rangeslider= {'visible':True}, row=2, col=1,rangeslider_thickness = 0.1)
@@ -156,6 +157,13 @@ def plot_result():
     fig.update(layout_yaxis_range = [0,120])
     fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
     fig.update_layout(height=400)
+    fig.update_layout(legend=dict(
+    orientation="v",
+    yanchor="auto",
+    y=1,
+    xanchor="right",  # changed
+    x=1
+    ))
 
     st.session_state.pressure_plot_handle = fig
     pressure_plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True)  
