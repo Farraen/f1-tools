@@ -255,14 +255,14 @@ with st.expander('Introduction',expanded=True):
 
     str3 = "This is a dashboard for extracting Max's race telemetry data and detecting anomalies to identify faults early.\
             It involves a relatively basic anomaly detection process due to the limited amount of telemetry data available."
-    st.write(str3)
+    st_text(str3)
     str3 = "A MongoDB database was set up to store telemetry data for all 2022 and 2023 races. \
         MongoDB is a document-oriented database, and data is stored as JSON documents. \
             The database is connected via an API over the internet to the dashboard."
-    st.write(str3)
+    st_text(str3)
     str3 = "For detecting anomalies, the LOF (Local Outlier Factor) algorithm is used. \
         It is trained using historical telemetry data and is employed to predict new, unseen data."
-    st.write(str3)
+    st_text(str3)
 
     image = read_image("images/Page4_tech.png")
     st.image(image,use_column_width=True)
