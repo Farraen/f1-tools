@@ -115,7 +115,7 @@ def st_text(text):
 # Build dashboard
 st.subheader('Racing Vehicle Optimiser')
 
-with st.expander('Introduction', expanded=False):
+with st.expander('Introduction', expanded=True):
 
     col1,col2 = st.columns([1,1])
     with col1:
@@ -487,7 +487,6 @@ if generate:
 
     st.session_state.results =  pd.DataFrame.from_dict(result).T
     
-    st.write(st.session_state.results)
 
 df = st.session_state.results
 

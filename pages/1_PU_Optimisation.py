@@ -246,13 +246,13 @@ def plot_results():
             dts = st.session_state.pu_results[i]
 
             # Get list of PUs
-            pu_list = dts['Projection'].unique().tolist()
+            pu_list = dts["PU Projection"].unique().tolist()
             pu_list.sort()
 
             # Find all max reduced for each PU
             maxpowerreduced = []
             for k in pu_list:
-                mx = np.max(dts.loc[np.where(dts['Projection'] == k)[0],'PowerReduced'].to_numpy())
+                mx = np.max(dts.loc[np.where(dts["PU Projection"] == k)[0],'PowerReduced'].to_numpy())
                 maxpowerreduced.append(mx)
 
             fig2.add_trace(go.Scatter(
@@ -314,11 +314,11 @@ def change_bias():
 # --------  For optimisation  -------------
 
 def make_full_solution(solution):
-    if not st.session_state.df["Actual"].isna().all():
+    if not st.session_state.df["PU Actual"].isna().all():
         dff = st.session_state.df.copy()
-        tracks_left_idx = dff["Actual"].isna()
-        actual = dff["Actual"].to_numpy()        
-        solutionFull = dff["Projection"].to_numpy()
+        tracks_left_idx = dff["PU Actual"].isna()
+        actual = dff["PU Actual"].to_numpy()        
+        solutionFull = dff["PU Projection"].to_numpy()
         solutionFull[~tracks_left_idx] =  actual[~tracks_left_idx]
         solutionFull[tracks_left_idx] =  solution
         solution = solutionFull
@@ -343,7 +343,7 @@ def on_generation(ga_instance):
 
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
 
-    st.session_state.df["Projection"] = solution
+    st.session_state.df["PU Projection"] = solution
     st.session_state.df["PowerLeft"] = PowerLeft["PowerLeft"]
     st.session_state.df["PowerReduced"] = PowerReduced["PowerReduced"]
     st.session_state.df["RUL"] = RUL["RUL"]
@@ -374,7 +374,7 @@ def optimisation_sequence():
     fitness_function = fitness_func
 
     # Only optimise track with no actual PU results
-    tracks_left = st.session_state.df["Actual"].isna().sum()
+    tracks_left = st.session_state.df["PU Actual"].isna().sum()
 
     num_parents_mating = 4
     sol_per_pop = 5
@@ -383,7 +383,7 @@ def optimisation_sequence():
 
     # Check PUs left
     pu_available = [1,2,3]
-    PU_failed = st.session_state.df['Failures'].dropna().unique().tolist()
+    PU_failed = st.session_state.df["PU Failures"].dropna().unique().tolist()
     for item in PU_failed:
         if item in pu_available:
             pu_available.remove(item)
@@ -418,19 +418,28 @@ def reoptimise():
                 for colname, cellvalue in value.items():
                     mode_requested.append(colname)
                     df.loc[row,colname] = cellvalue
-                    if df.loc[row,colname] == df.loc[row,'Projection']:
-                        flag = False
-                    else:
-                        flag = True
+
+                    # Only get update flag for actual manipulation not failure
+                    # Flag is for rerunning the decision engine
+                    if "PU Actual" in colname:
+                        if df.loc[row,colname] == df.loc[row,"PU Projection"]:
+                            flag = False
+                        else:
+                            flag = True
 
 
     st.session_state.df = df
 
-    if "Actual" in mode_requested or "Failures" in mode_requested:
+    if "PU Actual" in mode_requested:
         if flag:
             optimisation_sequence()
             status_placeholder.success('PU allocation is successful', icon="✅")
             time.sleep(0.5)
+
+    if "PU Failures" in mode_requested:
+        optimisation_sequence()
+        status_placeholder.success('PU allocation is successful', icon="✅")
+        time.sleep(0.5)
 
 
 #---------- Load in track information -------------
@@ -441,22 +450,21 @@ if not isinstance(st.session_state.df,pd.DataFrame):
     df = pd.read_excel('data/Page1_track.xlsx')
     
     st.session_state.df = df.copy()
-    df['Failures'] = np.nan
-    df['Actual'] = np.nan
-    df['Projection'] = np.nan
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df['Projection'].to_numpy())
+    df["PU Failures"] = np.nan
+    df["PU Actual"] = np.nan
+    df["PU Projection"] = np.nan
+    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
     df["PowerLeft"] = PowerLeft["PowerLeft"]
     df["PowerReduced"] = PowerReduced["PowerReduced"]
     df["RUL"] = RUL["RUL"]
 
 
-    df.insert(3, 'Projection', df.pop('Projection'))
-    df.insert(3, 'Actual', df.pop('Actual'))
-    df.insert(3, 'Failures', df.pop('Failures'))
+    df.insert(3, "PU Projection", df.pop("PU Projection"))
+    df.insert(3, "PU Actual", df.pop("PU Actual"))
+    df.insert(3, "PU Failures", df.pop("PU Failures"))
     df.pop('Date')
     df.pop('No')
 
-    
     # Going to be the main table
     st.session_state.df = df.copy()
 
@@ -464,7 +472,7 @@ else:
 
     # Simulate and repopulate the master table
     df = st.session_state.df
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df['Projection'].to_numpy())
+    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
     df["PowerLeft"] = PowerLeft["PowerLeft"]
     df["PowerReduced"] = PowerReduced["PowerReduced"]
     df["RUL"] = RUL["RUL"]
@@ -478,8 +486,8 @@ else:
     
 st_title('PU Decision Engine Playground')
 
-with st.expander('Introduction',expanded=False):
-    st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new incomning data and decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')
+with st.expander('Introduction',expanded=True):
+    st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new race data and historical decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')
     image = read_image("images/Page1_intro.png")
     st.image(image,width=700,use_column_width=True)
 
@@ -499,7 +507,18 @@ with st.expander('Live strategy table',expanded=True):
     )
 
     start_button = st.button('Initialise')
-    st.data_editor(st.session_state.df,use_container_width=True,key='mastertable',on_change=reoptimise)
+
+    # Highligh rows depending on type (actual or projection)
+    df_track_styled = st.session_state.df.copy()
+
+    actual_row = np.where(~df_track_styled["PU Actual"].isna())[0]
+    projection_row = np.where(df_track_styled["PU Actual"].isna())[0]
+
+    df_track_styled = df_track_styled.style.set_properties(subset = pd.IndexSlice[actual_row, :], **{'background-color' : 'darkgreen'})\
+    .set_properties(subset = pd.IndexSlice[projection_row, :], **{'background-color' : 'midnightblue'})
+
+    # create data editor for the master table
+    st.data_editor(df_track_styled,use_container_width=True,key='mastertable',disabled=["PU Projection"],on_change=reoptimise)
     my_bar = st.progress(0)
     status_placeholder = st.empty()
 
