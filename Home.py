@@ -39,8 +39,8 @@ with col21:
     st.image(image)
     st.subheader('AI Race Engineer')
     st.write('A race telemetry analysis tool using LLM (Large Language Model) to \
-             extract insights from vehicle measurement data. A new concept that is harnessing the \
-             power of LLM to extract instructions from a user prompt.')
+             extract insights from vehicle measurement data. A new concept that harnesses the \
+             power of LLM to extract instructions from user prompts.')
 
 with col31:
     if st.button('Open tool', use_container_width=True,key=3):
