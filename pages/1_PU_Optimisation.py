@@ -481,12 +481,12 @@ st_title('PU Decision Engine Playground')
 with st.expander('Introduction',expanded=False):
     st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new incomning data and decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')
     image = read_image("images/Page1_intro.png")
-    st.image(image,width=700)
+    st.image(image,width=700,use_column_width=True)
 
 with st.expander('Damage model',expanded=False):
     st_text('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
     image = read_image("images/Page1_damage.png")
-    st.image(image,width=700)
+    st.image(image,width=700,use_column_width=True)
 
 with st.expander('Live strategy table',expanded=True):
 
