@@ -27,43 +27,15 @@ if 'pu_results' not in st.session_state:
 if 'pu_track' not in st.session_state:
     st.session_state.pu_track = []
 
-if 'df' not in st.session_state:
-    st.session_state.df = []
-
-if 'bias' not in st.session_state:
-    st.session_state.bias = 2
-
-
-# For page layout
-
-st.set_page_config(layout="wide")
-
-st.markdown("""
-<style>
-.title_medium {
-    font-size:20px !important;
-}
- .text_small {
-    font-size:12px !important;
-}           
-</style>
-""", unsafe_allow_html=True)
-
-def st_title(text):
-    st.markdown(f'<p class="title_medium">{text}</p>', unsafe_allow_html=True)
-
-def st_text(text):
-    st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
+st.session_state.bias = []
+st.session_state.track_placeholder = []
+st.session_state.trackfinal_placeholder = []
+st.session_state.pu_iter_placeholder = []
+st.session_state.iterCompare_placeholder = []
+st.session_state.PUCompare_placeholder = []
 
 
-@st.cache_resource
-def read_image(img_path):
-    im = Image.open(img_path)
-    image = np.array(im)
-    return image
-
-
-# Common functions
+# Commong functions
 
 def interp2(X,Y,Z,Xv,Yv):
     length_values = len(X) * len(Y)
@@ -76,9 +48,10 @@ def interp2(X,Y,Z,Xv,Yv):
 
     return grid_z1
 
+
 def DamageModel(x):
 
-    dtt = st.session_state.df
+    dtt  = st.session_state.pu_track
 
     ICE_RUL  = [80, 70, 95]
     ICE_KW  = [425, 400, 450]
@@ -174,14 +147,19 @@ def DamageModel(x):
 
     return fitness_value, PowerLoss, PowerLeft, RUL, PowerReduced
         
+
 def plot_results():
 
     # Load last result
     if isinstance(st.session_state.pu_results, dict):
-
         key = list(st.session_state.pu_results)[-1]
-        df_best = st.session_state.pu_results[key]
+        dt_track = st.session_state.pu_results[key]
 
+        dt_track
+
+        #dt_track_styled = dt_track.style.set_properties(subset=['PU Allocation'], **{'background-color': 'darkblue'})
+
+        #st.session_state.trackfinal_placeholder.dataframe(dt_track_styled,height=800)
 
         fig = go.Figure()
 
@@ -192,6 +170,9 @@ def plot_results():
                 flag = False
 
             dts = st.session_state.pu_results[i]
+
+            print(dts['RUL'].values[0:5])
+
             fig.add_trace(go.Scatter(
                 y=dts['RUL'],
                 mode='lines',
@@ -203,7 +184,7 @@ def plot_results():
             ))
 
         fig.add_trace(go.Scatter(
-            y=df_best['RUL'],
+            y=dt_track['RUL'],
             mode='lines',
             name='Best PU allocation',
             line=dict(
@@ -245,9 +226,9 @@ def plot_results():
 
             dts = st.session_state.pu_results[i]
 
-            MaxPowerReduced1 = np.max(dts.loc[np.where(dts['Projection'] == 1)[0],'PowerReduced'].to_numpy())
-            MaxPowerReduced2 = np.max(dts.loc[np.where(dts['Projection'] == 2)[0],'PowerReduced'].to_numpy())
-            MaxPowerReduced3 = np.max(dts.loc[np.where(dts['Projection'] == 3)[0],'PowerReduced'].to_numpy())
+            MaxPowerReduced1 = np.max(dts.loc[np.where(dts['PU'] == 1)[0],'PowerReduced'].to_numpy())
+            MaxPowerReduced2 = np.max(dts.loc[np.where(dts['PU'] == 2)[0],'PowerReduced'].to_numpy())
+            MaxPowerReduced3 = np.max(dts.loc[np.where(dts['PU'] == 3)[0],'PowerReduced'].to_numpy())
 
             fig2.add_trace(go.Scatter(
                     x=[1,2,3],
@@ -277,36 +258,159 @@ def plot_results():
         fig2.update_layout(margin=dict(l=20, r=20, t=20, b=20))
         st.session_state.PUCompare_placeholder.plotly_chart(fig2,use_container_width=True)
 
-def change_bias():
-    bias = st.session_state.slider
-    if bias == 'High Performance':
-        st.session_state.bias = 1
-    elif bias == 'Longer RUL':
-        st.session_state.bias = 10
-    else:
-        st.session_state.bias = int(bias)
 
-# For optimisation
+# Setup the page layout
 
-def make_full_solution(solution):
-    if not st.session_state.df["Actual"].isna().all():
-        dff = st.session_state.df.copy()
-        tracks_left_idx = dff["Actual"].isna()
-        actual = dff["Actual"].to_numpy()        
-        solutionFull = dff["Projection"].to_numpy()
-        solutionFull[~tracks_left_idx] =  actual[~tracks_left_idx]
-        solutionFull[tracks_left_idx] =  solution
-        solution = solutionFull
-    return solution
+st.set_page_config(layout="wide")
+
+st.markdown("""
+<style>
+.title_medium {
+    font-size:20px !important;
+}
+ .text_small {
+    font-size:12px !important;
+}           
+
+</style>
+
+""", unsafe_allow_html=True)
+
+def st_title(text):
+    st.markdown(f'<p class="title_medium">{text}</p>', unsafe_allow_html=True)
+
+def st_text(text):
+    st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
+
+
+
+# For loading images
+@st.cache_resource
+def read_image(img_path):
+    im = Image.open(img_path)
+    image = np.array(im)
+    return image
+
+
+
+
+st_title('PU Decision Engine Playground')
+
+with st.expander('Introduction',expanded=False):
+    st_text('A virtual environment to test Genetic Algorithm for optimising PU selection')
+    st_text('Adapted from Farraen\'s 2018 Matlab GA PU script into Python. Results may vary due to to the GA library behaviour.')
+    st_text('The UI developed in 2018 using 2018 season track information.')
+
+with st.expander('Damage model',expanded=False):
+    st_text('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
+    image = read_image("images/pu_damage_model.PNG")
+    st.image(image,width=300)
+
+with st.expander('Strategy table',expanded=True):
+    st.session_state.track_placeholder = st.empty()
+
+
+
+with st.expander('Genetic algorithm optimisation',expanded=True):
+
+    col1, col2 = st.columns([0.8,1],gap='Small')
+
+    with col1:
+        start_button = st.button('Optimise')
+        gen_number = st.number_input("Number of generation", value=20, placeholder="Type a number...")
+
+        st.session_state.bias = st.select_slider(
+            'Select bias:',
+            options=['High Performance','2','3','4','5','6','7','8','9','Longer RUL'],
+            value=('2'),
+            key='GA select slider')
+
+        if st.session_state.bias == 'High Performance':
+            st.session_state.bias = 1
+        elif st.session_state.bias == 'Longer RUL':
+            st.session_state.bias = 10
+        else:
+            st.session_state.bias = int(st.session_state.bias)
+    
+    with col2:
+        st.session_state.pu_iter_placeholder = st.empty()
+
+    col1,col2 = st.columns([1,1])
+    with col1:
+        st_text('Plot shows the prediction of PU degradation for the race season using optimised PU allocation.')
+        st.session_state.iterCompare_placeholder = st.empty()
+    with col2:
+        st_text('Plot shows the power loss due to degradation for all power units')
+        st.session_state.PUCompare_placeholder = st.empty()
+
+st.header('Results')
+col11, dcol, col22 = st.columns([1,0.1,0.9])
+
+col11.write('Final results with PU allocation for all races. RUL is the Remaining Useful Life in %.')
+col11.write('The \'PU Allocation\' column is the index of the PU recommneded to be used for the race.')
+st.session_state.trackfinal_placeholder = col11.empty()
+
+
+
+
+st.write('Copyright © 2024 Farraen. All rights reserved.')
+
+def update_table():
+    st.session_state.tablechange
+
+# Reload data if available
+
+# Load in track information
+if not isinstance(st.session_state.pu_track,pd.DataFrame):
+    st.session_state.pu_track = pd.read_excel('data/Page1_track.xlsx')
+    st.session_state.pu_track["PU"] = 1
+
+    dtt = st.session_state.pu_track
+
+    solution = st.session_state.pu_track["PU"].to_numpy()
+    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
+
+    dts = pd.concat([dtt,PowerLeft["PowerLeft"],PowerReduced["PowerReduced"],RUL["RUL"]], axis=1)
+    st.session_state.pu_track = dts
+
+solution = st.session_state.pu_track["PU"].to_numpy()
+solution
+Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
+
+st.session_state.pu_track["PowerLeft"] = PowerLeft["PowerLeft"]
+st.session_state.pu_track["PowerReduced"] = PowerReduced["PowerReduced"]
+st.session_state.pu_track["RUL"] = RUL["RUL"]
+
+
+st.session_state.track_placeholder.data_editor(st.session_state.pu_track,on_change=update_table,use_container_width=True,key="tablechange")
+#plot_results()
+
+
+
+
+
+
+dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(
+    y=dta['value'],
+    mode='markers+lines',
+))
+fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+fig.update_yaxes(title_text='Fitness Value')
+fig.update_xaxes(title_text='Generation')
+fig.update_layout(height=300)
+
+st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True,height=300)
 
 
 def fitness_func(ga_instance, solution, solution_idx):
     
-    solution = make_full_solution(solution)
-
     fitness_value, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
 
     return fitness_value
+
 
 def on_start(ga_instance):
     st.session_state.pu_fitness_trace = []
@@ -314,27 +418,19 @@ def on_start(ga_instance):
         
 def on_generation(ga_instance):
 
-    #dtt = st.session_state.pu_track
+    dtt = st.session_state.pu_track
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
-
-    solution = make_full_solution(solution)
-
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
-    #dfsol = pd.DataFrame(solution,columns=["Projection"])
 
-    #dts = pd.concat([dfsol,dtt,PowerLeft["PowerLeft"],PowerReduced["PowerReduced"],RUL["RUL"]], axis=1)
-    
-    st.session_state.df["Projection"] = solution
-    st.session_state.df["PowerLeft"] = PowerLeft["PowerLeft"]
-    st.session_state.df["PowerReduced"] = PowerReduced["PowerReduced"]
-    st.session_state.df["RUL"] = RUL["RUL"]
-    dts = st.session_state.df.copy()
-
+    dtt["PU"] = solution
+    dtt["PowerLeft"] = PowerLeft["PowerLeft"]
+    dtt["PowerReduced"] = PowerReduced["PowerReduced"]
+    dtt["RUL"] = RUL["RUL"]
 
     index = ga_instance.generations_completed
-    st.session_state.pu_results[index] = dts
-
+    st.session_state.pu_results[index] = dtt
+    
     st.session_state.pu_fitness_trace.append(solution_fitness)
     dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
 
@@ -348,20 +444,20 @@ def on_generation(ga_instance):
     fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
     st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True)
 
-def optimisation_sequence():
+
+
+
+if start_button:
 
     fitness_function = fitness_func
 
-    # Only optimise track with no actual PU results
-    tracks_left = st.session_state.df["Actual"].isna().sum()
-
     num_parents_mating = 4
+
     sol_per_pop = 5
-    num_genes = int(tracks_left)
+    num_genes = 21
 
     init_range_low = 1
     init_range_high = 3
-
 
     ga_instance = pygad.GA(num_generations=gen_number,
                        num_parents_mating=num_parents_mating,
@@ -380,136 +476,7 @@ def optimisation_sequence():
 
     # Latest results
     plot_results()
-    
-    #st.rerun()
 
-def reoptimise():
-    df = st.session_state.df
-    for index, updates in st.session_state["mastertable"].items():
-        if "edited_rows" in index:
-            for row, value in updates.items():
-                for colname, cellvalue in value.items():
-                    df.loc[row,colname] = cellvalue
-    st.session_state.df = df
-
-    optimisation_sequence()
-
-
-
-
-
-#----- Load in track information ------
-if not isinstance(st.session_state.df,pd.DataFrame):
-    df = pd.read_excel('data/Page1_track.xlsx')
-    
-    # DELETE
-    st.session_state.pu_track = df.copy()
-
-    st.session_state.df = df.copy()
-    df['Actual'] = np.nan
-    df['Projection'] = np.nan
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df['Projection'].to_numpy())
-    df["PowerLeft"] = PowerLeft["PowerLeft"]
-    df["PowerReduced"] = PowerReduced["PowerReduced"]
-    df["RUL"] = RUL["RUL"]
-    
-    # Going to be the main table
-    st.session_state.df = df.copy()
-
-else:
-
-    df = st.session_state.df
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df['Projection'].to_numpy())
-    df["PowerLeft"] = PowerLeft["PowerLeft"]
-    df["PowerReduced"] = PowerReduced["PowerReduced"]
-    df["RUL"] = RUL["RUL"]
-    
-    # Going to be the main table
-    st.session_state.df = df
-
-
-
-
-st_title('PU Decision Engine Playground')
-
-with st.expander('Introduction',expanded=False):
-    st_text('A virtual environment to test Genetic Algorithm for optimising PU selection')
-    st_text('Adapted from Farraen\'s 2018 Matlab GA PU script into Python. Results may vary due to to the GA library behaviour.')
-    st_text('The UI developed in 2018 using 2018 season track information.')
-
-with st.expander('Damage model',expanded=False):
-    st_text('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
-    image = read_image("images/pu_damage_model.PNG")
-    st.image(image,width=300)
-
-with st.expander('Strategy table',expanded=True):
-
-    st_text('Final results with PU allocation for all races. RUL is the Remaining Useful Life in %.The \'PU Allocation\' column is the index of the PU recommneded to be used for the race.')
-    st.data_editor(st.session_state.df,use_container_width=True,key='mastertable',on_change=reoptimise)
-
-with st.expander('Genetic algorithm optimisation',expanded=True):
-
-    col1, col2 = st.columns([0.8,1],gap='Small')
-
-    with col1:
-        start_button = st.button('Optimise')
-        gen_number = st.number_input("Number of generation", value=20, placeholder="Type a number...")
-
-        st.select_slider(
-            'Select bias:',
-            options=['High Performance','2','3','4','5','6','7','8','9','Longer RUL'],
-            value=('2'),
-            on_change=change_bias,
-            key='slider')
-
-    with col2:
-        st.session_state.pu_iter_placeholder = st.empty()
-
-    
-    col1,col2 = st.columns([1,1])
-    with col1:
-        st_text('Plot shows the prediction of PU degradation for the race season using optimised PU allocation.')
-        st.session_state.iterCompare_placeholder = st.empty()
-    
-    with col2:
-        st_text('Plot shows the power loss due to degradation for all power units')
-        st.session_state.PUCompare_placeholder = st.empty()
-
-
-st.write('Copyright © 2024 Farraen. All rights reserved.')
-
-
-
-
-
-
-
-
-
-
-plot_results()
-
-
-dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
-
-fig = go.Figure()
-fig.add_trace(go.Scatter(
-    y=dta['value'],
-    mode='markers+lines',
-))
-fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-fig.update_yaxes(title_text='Fitness Value')
-fig.update_xaxes(title_text='Generation')
-fig.update_layout(height=300)
-
-st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True,height=300)
-
-
-if start_button:
-    optimisation_sequence()
-    st.rerun()
-
-
-
-
+if st.button('Test'):
+    st.session_state.pu_results
  
