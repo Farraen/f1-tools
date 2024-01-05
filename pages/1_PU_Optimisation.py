@@ -485,8 +485,8 @@ with st.expander('Introduction',expanded=False):
 
 with st.expander('Damage model',expanded=False):
     st_text('The optimiser uses an artificial damage model made solely for demonstration purposes. The data does not represent true PU values.')
-    image = read_image("images/pu_damage_model.PNG")
-    st.image(image,width=300)
+    image = read_image("images/pu_damage.PNG")
+    st.image(image,width=700)
 
 with st.expander('Live strategy table',expanded=True):
 
