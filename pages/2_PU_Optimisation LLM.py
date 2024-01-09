@@ -715,7 +715,7 @@ st_title('PU Decision Engine + AI Race Engineer')
 
 with st.expander('Introduction',expanded=True):
     st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new race data and historical decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')
-    image = read_image("images/Page1_intro.png")
+    image = read_image("images/Page2_intro.png")
     st.image(image,width=700,use_column_width=True)
 
 with st.expander('Damage model',expanded=False):
