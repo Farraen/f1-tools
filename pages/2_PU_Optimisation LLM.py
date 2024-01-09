@@ -205,7 +205,7 @@ def check_recommendations(prompt):
 
 def send_message_technical(prompt):
 
-    df = pd.read_pickle("test.pkl", compression='infer')
+    df = st.session_state.df
     a = df.columns.values.tolist()
     b = df.values.tolist()
     b.insert(0, a)
@@ -792,7 +792,7 @@ with st.expander('PU selection optimisation',expanded=True):
             st.session_state.messages.append({"role": "user", "content": prompt})
 
             index = int(find_task(prompt))
-            print(index)
+            print()
 
             # Initialise
             if index == -1:
