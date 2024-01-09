@@ -34,23 +34,20 @@ with col11:
     
 with col21:
     if st.button('Open tool', use_container_width=True,key=2):
-        switch_page("AI Race Engineer")
+        switch_page("PU Optimisation LLM")
     image = read_image("images/Image_2.png")
     st.image(image)
-    st.subheader('AI Race Engineer')
-    st.write('A race telemetry analysis tool using LLM (Large Language Model) to \
-             extract insights from vehicle measurement data. A new concept that harnesses the \
-             power of LLM to extract instructions from user prompts.')
+    st.subheader('PU Decision Engine + AI Race Engineer')
+    st.write('Same PU decision engine dashboard but powered by LLM (Large Language Model). It can also make recommendations based on current PU strategy situation. The LLM persona has been tuned to mimic a junior race engineer.')
 
 with col31:
     if st.button('Open tool', use_container_width=True,key=3):
-        switch_page("Combustion Strategy")
+        switch_page("AI Race Engineer")
     image = read_image("images/Image_3.png")
     st.image(image)
-    st.subheader('Model Parameter Tuner')
-    st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
-             for sensorless system. It is a simple tool for filling in model parameters to \
-             match as measured data from physical sensor.')
+    st.subheader('AI Junior Race Engineer')
+    st.write('A tuned LLM (Large Language Model) persona to mimic a junior race engineer. \
+             Useful to ask anything within the racing domain. For future development, it can connect to the MongoDB database to extract and process race telemetery data. Powered by OpenAI language model.')
     
 
 st.header(' ')
@@ -60,20 +57,28 @@ gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 
 with col12:
     if st.button('Open tool', use_container_width=True,key=4):
+        switch_page("Combustion Strategy")
+    image = read_image("images/Image_3.png")
+    st.image(image)
+    st.subheader('Model Parameter Tuner')
+    st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
+             for sensorless system. It is a simple tool for filling in model parameters to \
+             match as measured data from physical sensor.')
+
+with col22:
+    if st.button('Open tool', use_container_width=True,key=5):
         switch_page("Anomaly Estimation")
     image = read_image("images/Image_4.png")
     st.image(image)
-    st.subheader('')
     st.subheader('Anomaly Detection Testing Tool')
     st.write('A tool for training a ML classifier for detecting anomalies in \
              vehicle measurement data.')
     
-with col22:
-    if st.button('Open tool', use_container_width=True,key=5):
+with col32:
+    if st.button('Open tool', use_container_width=True,key=6):
         switch_page("Generative Design")
     image = read_image("images/Image_5.png")
     st.image(image)
-    st.subheader('')
     st.subheader('AI Designer (Generative Design)')
     st.write('A decision engine demonstrator for assisting engineers in powertrain design selection. \
              Using AI and machine learning models to make fast decisions based on user design criteria.')
