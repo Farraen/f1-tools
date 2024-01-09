@@ -781,8 +781,6 @@ with st.expander('PU selection optimisation',expanded=True):
                 st.write(f"🤖    :blue[{message['content']}]")
 
         
-
-
         if st.session_state.prompt:
             prompt = st.session_state.prompt
             # User
