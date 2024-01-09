@@ -58,7 +58,7 @@ gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 with col12:
     if st.button('Open tool', use_container_width=True,key=4):
         switch_page("Combustion Strategy")
-    image = read_image("images/Image_3.png")
+    image = read_image("images/Image_4.png")
     st.image(image)
     st.subheader('Model Parameter Tuner')
     st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
@@ -68,7 +68,7 @@ with col12:
 with col22:
     if st.button('Open tool', use_container_width=True,key=5):
         switch_page("Anomaly Estimation")
-    image = read_image("images/Image_4.png")
+    image = read_image("images/Image_5.png")
     st.image(image)
     st.subheader('Anomaly Detection Testing Tool')
     st.write('A tool for training a ML classifier for detecting anomalies in \
@@ -77,7 +77,7 @@ with col22:
 with col32:
     if st.button('Open tool', use_container_width=True,key=6):
         switch_page("Generative Design")
-    image = read_image("images/Image_5.png")
+    image = read_image("images/Image_6.png")
     st.image(image)
     st.subheader('AI Designer (Generative Design)')
     st.write('A decision engine demonstrator for assisting engineers in powertrain design selection. \
