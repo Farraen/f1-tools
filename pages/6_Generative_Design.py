@@ -126,7 +126,7 @@ with st.expander('Introduction', expanded=True):
                 moving the sliders. The next section is to generate several vehicle designs using an optimiser. Hover the mouse on top \
                 of the scatter plot to inspec the designs.')
     with col2:
-        image = read_image("images/Page5_model.png")
+        image = read_image("images/Page6_intro.png")
         st.image(image)
 
 with st.expander('Settings', expanded=False):

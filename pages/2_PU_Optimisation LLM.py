@@ -240,7 +240,7 @@ def send_message_technical(prompt):
 def update_table(prompt):
 
 
-    df = pd.read_pickle("test.pkl", compression='infer')
+    df = st.session_state.df.copy()
     df = df[['Track', 'PU Failures', 'PU Actual', 'PU Projection']]
     df['Round'] = df.index +1 
     df['Race number'] = df.index +1 
@@ -257,18 +257,26 @@ def update_table(prompt):
 
     str1 = f"You are an F1 race engineer and a data scientist. Your role would be analysing race telemetry and find patterns, trends and anomalies. PU or power unit is the engine of an F1 car."
     str4 = f"There is a table called PU allocation table of F1 power units. There are 21 rows for each races with one power unit allocated for each race. These are the columns and description in a dictionary string format: {str_table_columns}. "
-    str5 = f"There are three power units that can be assigned for each race and they are identified as 1, 2 and 3."
-    str6 = f"The PU are selected for each of the race depending on their performance and durability. The objective of the selection is the maximise the vehicle performance throughout the season while keeping all PU survive until the last race of the season."
-    str7 = f"The power unit is the engine of the F1 car and it has range of RUL or remaining useful life between 0% to 100%. Power unit or PU with RUL above 0% indicates that the PU is surviving. The power of the PU is in terms of kW. The higher the kW, the better the PU performance. "
-    
     str2 = f"This is a power unit allocation table in a list format with the first row is the column names: '{df_str}'. "
-    str3 = f"Update the table based on the user prompt '{prompt}'. Output the table string in between # and $. '"
+
+    str3 = f"Based on the user prompt '{prompt}', determine the PU index number. Do not include any explanation."
     prompt = str2 + prompt + str3
-
-    persona = [{"role":"system", "content":str1+str4+str5+str6+str7}]
+    persona = [{"role":"system", "content":str1+str4}]
     response_str = send_message_secondary(persona,prompt)
+    temp = re.findall(r'\d+', response_str)
+    index = list(map(int, temp))
 
-    return response_str
+    str3 = f"Based on the user prompt '{prompt}', determine race number. if there is no race number and the user specify the race track name, then find the race track index based on the PU allocation table. Do not include any explanation."
+    prompt = str2 + prompt + str3
+    persona = [{"role":"system", "content":str1+str4}]
+    response_str = send_message_secondary(persona,prompt)
+    temp = re.findall(r'\d+', response_str)
+    race = list(map(int, temp))
+
+    payload = [index,race]
+
+    return payload
+
 
 # --------- Common functions --------------
 
@@ -918,6 +926,24 @@ if 'failed pu' in action:
     else:
         st.session_state.messages.append({"role": "assistant", "content": payload2[0]})
   
+    st.rerun()    
+
+if 'update table' in action:
+    # Update table
+    df = st.session_state.df.copy()
+    Actual = payload[0]
+    Race_affected = payload[1]
+    df.loc[Race_affected[0]-1,'PU Actual'] = Actual[0]
+    st.session_state.df = df
+    
+    # Rerun optimisation sequence
+    optimisation_sequence()
+    status_placeholder.success('PU allocation updated.', icon="✅")
+    time.sleep(1)
+
+    # Check if AI make recommedations
+    st.session_state.messages.append({"role": "assistant", "content": 'Done.'})
+          
     st.rerun()    
 
 if 'clear chat' in action:
