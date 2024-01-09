@@ -776,7 +776,7 @@ with st.expander('PU selection optimisation',expanded=True):
 
         for message in st.session_state.messages:
             if "user" in message["role"]:
-                st.write(f"🧔‍♂️    {message['content']}")
+                st.write(f"🧑‍💻    {message['content']}")
             else:
                 st.write(f"🤖    :blue[{message['content']}]")
 
@@ -784,7 +784,7 @@ with st.expander('PU selection optimisation',expanded=True):
         if st.session_state.prompt:
             prompt = st.session_state.prompt
             # User
-            st.write(f"🧔‍♂️   {prompt}")
+            st.write(f"🧑‍💻   {prompt}")
 
             # Assistant
             st.session_state.messages.append({"role": "user", "content": prompt})
