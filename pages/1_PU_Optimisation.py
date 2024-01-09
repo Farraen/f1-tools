@@ -49,6 +49,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 action = ""
 
+if "prompt" not in st.session_state:
+    st.session_state.prompt = []
+
+if "text_input" not in st.session_state:
+    st.session_state.text_input = []
+
 # --------  For page layout  ---------------
 st.set_page_config(layout="wide")
 
@@ -125,7 +131,7 @@ def check_question(prompt):
     index = []
     for i in range(0,3):
         str1 = f"You are an f1 racing engineer and has racing dashboard waiting for request from the user. "
-        str8 = f"Based on the user prompt '{prompt}', is it a specific process task? Check if it is about initialising or populating PU allocation table or any tables, then it is a specific process task and answer yes. Check if it is about informing PU status or PU failures, then it is a specific process task and answer yes. Check if it is about reoptimising/restrategising/optimising PU allocation, then it is a specific process task and answer yes."
+        str8 = f"Based on the user prompt '{prompt}', is it a specific process task? Check if it is about initialising or populating PU allocation table or any tables, then it is a specific process task and answer yes. Check if it is about informing PU status or PU failures, then it is a specific process task and answer yes. Check if it is about reoptimising/restrategising/optimising PU allocation, then it is a specific process task and answer yes. Check if the user is informing about failed PU in a specific race or round, then it is a specific process task and answer yes."
         persona = [{"role":"system", "content":str1}]
         prompt = str8
         response_str = send_message_secondary(persona,prompt)
@@ -147,7 +153,7 @@ def find_task(prompt):
         "failed PU"]
     str_options = json.dumps(dict_options)
 
-    str8 = f"Based on the user prompt '{prompt}', find the closest item to the items in this list [{str_options}]. Put the results in a dictionary with clostest index in 'index' key and closest item in 'value' key. Just output the dictionary in string format."
+    str8 = f"Based on the user prompt '{prompt}', find the closest item to the items in this list [{str_options}]. if there is no item in the list that is close to the prompt, the assign index '8'. if the user prompt is a specific technical process but not in the list [{str_options}], then assign index '4'. Put the results in a dictionary with clostest index in 'index' key and closest item in 'value' key. Just output the dictionary in string format."
 
     persona = [{"role":"system", "content":str1}]
     prompt = str8
@@ -213,15 +219,22 @@ def send_message_technical(prompt):
     str4 = f"There is a table called PU allocation table of F1 power units. There are 21 rows for each races with one power unit allocated for each race. These are the columns and description in a dictionary string format: {str_table_columns}. "
     str5 = f"There are three power units that can be assigned for each race and they are identified as 1, 2 and 3."
     str6 = f"The PU are selected for each of the race depending on their performance and durability. The objective of the selection is the maximise the vehicle performance throughout the season while keeping all PU survive until the last race of the season."
-    str7 = f"The power unit is the engine of the F1 car and it has range of RUL or remaining useful life between 0% to 100%. Power unit or PU with RUL above 0% indicates that the PU is surviving. The power of the PU is in terms of kW. The higher the kW, the better the PU performance. "
+    str7 = f"The power unit is the engine of the F1 car and it has range of RUL or remaining useful life between 0% to 100%. Power unit or PU with RUL above 0% indicates that the PU survived. The power of the PU is in terms of kW. The higher the kW, the better the PU performance. "
     
     str2 = f"This is a power unit allocation table in a list format with the first row is the column names: '{df_str}'. "
-    prompt = str2 + prompt
+    str8 = f"If the user is asking about PU survival projection or prediction, the refer to just 'RUL' column and check they are all above 0%. If it is all above 0%, then report that all PU going to survive. Do show the whole column in the response."
 
-    persona = [{"role":"system", "content":str1+str4+str5+str6+str7}]
-    response_str = send_message_secondary(persona,prompt)
+    prompt = str2 + prompt + str8
+    persona = [{"role":"system", "content":str1+str4+str5+str6+str7+str8}]
 
-    return response_str
+    user_messages = [{"role":"user", "content":prompt}]
+    user_messages.extend(persona)
+    openai_response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": m["role"], "content": m["content"]} for m in user_messages],
+        stream=True)
+    
+    return openai_response
 
 def update_table(prompt):
 
@@ -686,50 +699,19 @@ def send_message(messages):
 
 
 
-def prompt_engine(messages):
+def chat_callback():
+    prompt = st.session_state.text_input
+    st.session_state.prompt = prompt
 
-    prompt = messages[-1]["content"]
-
-    # Layer 1: Seperate questions
-    process_flag = check_question(prompt)
-
-    # Layer 2: Filter task
-    action = []
-    payload = []
-    payload2 = []
-    print(process_flag)
-    if process_flag:
-        
-        index = find_task(prompt)
-        # Initialise
-        if index == 0:
-            action = 'initialise table'
-            payload = []
-
-
-
-        print(index)
-
-        
-        response = messages.append(prompt)
-
-        prompt = [{"role":"user", "content":"Say 'It is done!'. Don't say anything else."}]
-        response = send_message(prompt)
-
-
-    else:
-        response = send_message(messages)
-
-    return response
-
-
+def select_callback():
+    prompt = st.session_state.select_input
+    st.session_state.prompt = prompt
 
 
 # ----------- UI Section -------------------------
     
 st_title('PU Decision Engine Playground')
 
-prompt = st.chat_input("What is up?")
 
 with st.expander('Introduction',expanded=True):
     st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new race data and historical decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')
@@ -742,77 +724,110 @@ with st.expander('Damage model',expanded=False):
     st.image(image,width=700,use_column_width=True)
 
 
-with st.expander('Live strategy table',expanded=True):
+with st.expander('PU selection optimisation',expanded=True):
 
-    st.markdown(
-    """
-    - :green[Initialise button]: Press to initialise the PU selection at start of the season. Use the GA settings panel to change the decision prioritisation to either performance or durability.
-    - :blue[Actual column]: Use the column with actual selection for completed races and GA will decide the best allocation for the next races. If there is no change, then GA will not trigger.
-    - :red[Failure column]: Use the Failure column to exclude failed PU (fill in using PU index 1,2,3,..)
-    """
-    )
+    col1,col2 = st.columns([0.3,0.7],gap="medium")
+    with col2:
+        st.write('PU allocation strategy table (Auto-update)')
+        st.markdown(
+        """
+        - :green[Initialise button]: Press to initialise the PU selection at start of the season. Use the GA settings panel to change the decision prioritisation to either performance or durability.
+        - :blue[Actual column]: Use the column with actual selection for completed races and GA will decide the best allocation for the next races. If there is no change, then GA will not trigger.
+        - :red[Failure column]: Use the Failure column to exclude failed PU (fill in using PU index 1,2,3,..)
+        """
+        )
 
-    start_button = st.button('Initialise')
+        start_button = st.button('Initialise')
+        my_bar = st.progress(0)
 
-    # Highligh rows depending on type (actual or projection)
-    df_track_styled = st.session_state.df.copy()
+        # Highligh rows depending on type (actual or projection)
+        df_track_styled = st.session_state.df.copy()
 
-    actual_row = np.where(~df_track_styled["PU Actual"].isna())[0]
-    projection_row = np.where(df_track_styled["PU Actual"].isna())[0]
+        actual_row = np.where(~df_track_styled["PU Actual"].isna())[0]
+        projection_row = np.where(df_track_styled["PU Actual"].isna())[0]
 
-    df_track_styled = df_track_styled.style.set_properties(subset = pd.IndexSlice[actual_row, :], **{'background-color' : 'darkgreen'})\
-    .set_properties(subset = pd.IndexSlice[projection_row, :], **{'background-color' : 'midnightblue'})
+        df_track_styled = df_track_styled.style.set_properties(subset = pd.IndexSlice[actual_row, :], **{'background-color' : 'darkgreen'})\
+        .set_properties(subset = pd.IndexSlice[projection_row, :], **{'background-color' : 'midnightblue'})
 
-    # create data editor for the master table
-    st.data_editor(df_track_styled,use_container_width=True,key='mastertable',disabled=["PU Projection"],on_change=reoptimise)
-    my_bar = st.progress(0)
-    status_placeholder = st.empty()
-
-
-
-with st.expander('AI race engineer',expanded=True):
-
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        # create data editor for the master table
+        st.data_editor(df_track_styled,use_container_width=True,key='mastertable',disabled=["PU Projection"],on_change=reoptimise)
+        status_placeholder = st.empty()
 
 
-    if prompt:
-        #st.session_state.messages.append({"role": "user", "content": prompt})
+    with col1:
+        
+        st.write('AI race engineer')
+     
+        st.selectbox('You might want to try these prompts...',
+            ["How to select a power unit for an F1 car?",
+                "How to do PU allocation for each race?",
+                "initialise pu allocation table",
+                "PU number 1 and 2 failed at race 20",
+                "PU 1 has failed at race 3, make new recommendations.",
+                "Restrategise",
+                "Actual PU for race 2 is 1",
+                "Actual PU for monaco race is 3",
+                "PU number 3 failed at race 2",
+                "How to optimise a racing line ?",
+                "When is the first f1 race?",
+                "Which track is the hottest?"],index=None,key="select_input",on_change=select_callback)
 
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        st.text_input("Enter prompt here:",key=10,on_change=chat_callback)
 
-        with st.chat_message("assistant"):
+        for message in st.session_state.messages:
+            if "user" in message["role"]:
+                st.write(f"🧔‍♂️    {message['content']}")
+            else:
+                st.write(f"🤖    :blue[{message['content']}]")
 
+        
+
+
+        if st.session_state.prompt:
+            prompt = st.session_state.prompt
+            # User
+            st.write(f"🧔‍♂️   {prompt}")
+
+            # Assistant
             st.session_state.messages.append({"role": "user", "content": prompt})
 
-            # Layer 1: Seperate questions
-            process_flag = check_question(prompt)
-            if process_flag:
-                index = find_task(prompt)
-                
-                # Initialise
-                if index == 0:
+            index = int(find_task(prompt))
+            print(index)
+            # Initialise
+            if index == 0:
                     action = 'initialise table'
-                    payload = []
-
-                full_response = 'Done.'
+            elif index == 1:
+                action = 'update table'
+                payload = update_table(prompt)
+            elif index == 2:
+                action = 'initialise table'   
+            elif index == 3:
+                action = 'failed pu'
+                payload = find_failed_pu(prompt)
+                payload2 = check_recommendations(prompt)
+                full_response = 'Ok.'
                 message_placeholder = st.empty()
                 message_placeholder.markdown(full_response)
-
-            else:
-                openai_response = send_message(st.session_state.messages)
-
+            elif index == 4:
+                openai_response = send_message_technical(prompt)
+                action = 'technical'
                 message_placeholder = st.empty()
                 full_response = ""
                 for response in openai_response:
                     full_response += (response.choices[0].delta.content or "")
-                    message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
+                    message_placeholder.write(f"🤖    :blue[{full_response}]▌")
+                message_placeholder.write(f"🤖    :blue[{full_response}]")
+            else:
+                openai_response = send_message(st.session_state.messages)
+                message_placeholder = st.empty()
+                full_response = ""
+                for response in openai_response:
+                    full_response += (response.choices[0].delta.content or "")
+                    message_placeholder.write(f"🤖    :blue[{full_response}]▌")
+                message_placeholder.write(f"🤖    :blue[{full_response}]")
 
 
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 
 with st.expander('Optimisation results',expanded=True):
@@ -853,11 +868,18 @@ st.write('Copyright © 2024 Farraen. All rights reserved.')
 plot_results()
 plot_iter()
 
+st.session_state.prompt = []
+
+
 if 'initialise table' in action:
     optimisation_sequence()
     status_placeholder.success('PU allocation is successful', icon="✅")
     time.sleep(1)
     #st.session_state.df.to_pickle("test.pkl")
+
+
+    st.session_state.messages.append({"role": "assistant", "content": 'Done.'})
+
     st.rerun()    
 
 
