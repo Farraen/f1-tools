@@ -86,7 +86,7 @@ df = load_range('data/Page5_range.csv')
 st.session_state.solution_baseline = df.iloc[0,:].to_dict()
 st.session_state.solution_best = df.iloc[3,:].to_dict()
 st.session_state.columns = df.columns
-st.session_state.df = df
+st.session_state.df_gen = df
 
 arr = df.loc[['Min','Max'],:]
 
@@ -395,7 +395,7 @@ plot()
 
 def rescale_solution(solution):
     solution = np.double(solution)
-    df = st.session_state.df
+    df = st.session_state.df_gen
     d = {}
     for index, var in enumerate(st.session_state.columns):
         dff = df[var]
