@@ -172,7 +172,7 @@ st.subheader('Performance comparison')
 sol_select = st.multiselect(
     'Select solution',
     range(1,2*(n_sol+1)-2),
-    [1,2,3])
+    [30,41,43])
 
 
 
