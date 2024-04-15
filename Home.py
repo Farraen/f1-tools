@@ -94,5 +94,5 @@ with col12:
     image = read_image("images/Image_4.png")
     st.image(image)
     st.subheader('Tire Strategy')
-    st.write('A tool for testing tire strategy decision engine for planning tire change during a race.')
+    st.write('A tool for testing tire strategy decision engine for planning tire change during a race. Genetic algorithm is used as the decision engine to generate tire change solutions.')
     
