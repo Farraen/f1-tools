@@ -82,4 +82,17 @@ with col32:
     st.subheader('AI Designer (Generative Design)')
     st.write('A decision engine demonstrator for assisting engineers in powertrain design selection. \
              Using AI and machine learning models to make fast decisions based on user design criteria.')
+
+st.header(' ')
+st.header(' ')
+
+gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
+
+with col12:
+    if st.button('Open tool', use_container_width=True,key=4):
+        switch_page("Tire Strategy")
+    image = read_image("images/Image_4.png")
+    st.image(image)
+    st.subheader('Tire Strategy')
+    st.write('A tool for testing tire strategy decision engine for planning tire change during a race.')
     
