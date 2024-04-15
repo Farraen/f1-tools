@@ -91,7 +91,7 @@ gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 with col12:
     if st.button('Open tool', use_container_width=True,key=7):
         switch_page("Tire Strategy")
-    image = read_image("images/Image_4.png")
+    image = read_image("images/Image_7.png")
     st.image(image)
     st.subheader('Tire Strategy')
     st.write('A tool for testing tire strategy decision engine for planning tire change during a race. Genetic algorithm is used as the decision engine to generate tire change solutions.')
