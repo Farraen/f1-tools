@@ -168,11 +168,16 @@ with col3:
     
 
 st.subheader('Performance comparison')
+if n_sol < 20:
+    default = [10,11,12]
+else:
+    default = [30,41,43]
+    
 
 sol_select = st.multiselect(
     'Select solution',
     range(1,2*(n_sol+1)-2),
-    [30,41,43])
+    default)
 
 
 
