@@ -89,7 +89,7 @@ st.header(' ')
 gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
 
 with col12:
-    if st.button('Open tool', use_container_width=True,key=4):
+    if st.button('Open tool', use_container_width=True,key=7):
         switch_page("Tire Strategy")
     image = read_image("images/Image_4.png")
     st.image(image)
