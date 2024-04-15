@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 st.set_page_config(layout='wide')
 
 st.subheader('Tire strategy decision engine')
-st.text('A prototype decision engine for tire strategy')
+st.text('A prototype decision engine for tire strategy. Uses genetic algorithm as decision engine to produce solutions for tire change and compount selection.')
 
 if "fitness" not in st.session_state:
     #st.session_state.fitness = np.load('fitness.npy',allow_pickle='TRUE').item()
