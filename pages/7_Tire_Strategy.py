@@ -6,7 +6,7 @@ from numpy.matlib import repmat
 import pygad
 import plotly.express as px
 import plotly.graph_objects as go
-
+import time
 
 st.set_page_config(layout='wide')
 
@@ -215,6 +215,7 @@ if optimise:
         fitness = 100-t_total_race
         
         st.session_state.fitness.append(t_total_race)
+        time.sleep(0.1)
 
         
     fitness_function = fitness_func

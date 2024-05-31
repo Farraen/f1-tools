@@ -96,3 +96,19 @@ with col12:
     st.subheader('Tire Strategy')
     st.write('A decision engine platform for tire change strategy. It can help race engineers to predict optimal lap for tire change and compound selection. Genetic algorithm is used as the decision engine to generate tire change solutions.')
     
+with col22:
+    if st.button('Open tool', use_container_width=True,key=8):
+        switch_page("Data Mining")
+    image = read_image("images/Image_8.png")
+    st.image(image)
+    st.subheader('Data Mining')
+    st.write('A data exploration tool for finding underlying patterns.')
+    
+with col32:
+    if st.button('Open tool', use_container_width=True,key=9):
+        switch_page("Prognostics")
+    image = read_image("images/Image_9.png")
+    st.image(image)
+    st.subheader('Prognostics')
+    st.write('A tool for investigating early failures.')
+    

@@ -12,11 +12,7 @@ import plotly.express as px
 from PIL import Image
 import plotly
 from plotly.subplots import make_subplots
-from sklearn.neighbors import LocalOutlierFactor 
 import datetime
-from sklearn.neighbors import LocalOutlierFactor
-from numpy import where
-from sklearn.preprocessing import StandardScaler
 import pickle
 
 
@@ -76,6 +72,12 @@ if 'select' not in st.session_state:
 
 if 'analysis_figure' not in st.session_state:
     st.session_state.analysis_figure = []
+    
+if 'analysis_figure_2' not in st.session_state:
+    st.session_state.analysis_figure_2 = []
+    
+if 'analysis_figure_3' not in st.session_state:
+    st.session_state.analysis_figure_3 = []
 
 if 'model' not in st.session_state:
     filename = 'data/Page4_model.sav'
@@ -168,6 +170,7 @@ def GetRaceInfo():
     cur = race_info.find_one()
     st.session_state.total_laps = cur['total_laps']
     st.session_state.race_name = cur['Name']       
+    
 
 def GetRaceData(year,race,lap):
 
@@ -221,56 +224,11 @@ def PlotTelemetry(fig2,df,ToPlot,cc,trans,name):
 
     return fig2
 
-def PlotAnomaly(fig2,df,ToPlot,name,t_outliers):
-
-    # Time series plot
-    for index,channel in enumerate(ToPlot):
-
-        x=df['Time']
-        y=df[channel]
-
-        if any(t_outliers):
-
-            x=df.loc[df['Time'].isin(t_outliers),'Time']
-            y=df.loc[df['Time'].isin(t_outliers),channel]
-
-            fig2.add_trace(go.Scatter(
-                x=x,
-                y=y,
-                line=dict(width=10, color='yellow'),
-                mode='markers',
-                yaxis="y",
-            name= f"Anomalies  [{channel}]",
-                opacity=1,
-                legendgroup=str(index+1),
-                showlegend = True,
-            ),row=index+1, col=1)
-
-    return fig2         
 
 
-st.subheader("F1 Anomaly Estimator")
+st.subheader("Data Mining and Exploration Tool (Still under development)")
 
-with st.expander('Introduction',expanded=True):
-
-    str1 = "This is a dashboard for extracting Max's race telemetry data and detecting anomalies to identify faults early. It involves a relatively basic anomaly detection process due to the limited amount of telemetry data available. A MongoDB database was set up to store telemetry data for all 2022 and 2023 races. MongoDB is a document-oriented database, and data is stored as JSON documents. The database is connected via an API over the internet to the dashboard. For detecting anomalies, the LOF (Local Outlier Factor) algorithm is used. It is trained using historical telemetry data and is employed to predict new, unseen data."
-    st_text(str1)
-
-    image = read_image("images/Page4_tech.png")
-    st.image(image,use_column_width=True)
-
-with st.expander('MongoDB database',expanded=True):
-
-    st.info('Status: ' + st.session_state.db_status, icon="ℹ️")
-    col11,col22 = st.columns([0.5,1])
-    with col11:
-        ping_button = st.button("Ping database")
-    with col22:
-        db_stat_placeholder = st.empty()
-
-
-
-with st.expander('Data visualisation',expanded=True):
+with st.expander('Data selection',expanded=True):
 
     col1,col2 = st.columns([0.5,1],gap="medium")
     with col1:
@@ -304,15 +262,7 @@ with st.expander('Data visualisation',expanded=True):
         with row2:
             metric5_placeholder = st.metric("Ambient temp", "")
 
-with st.expander('Visualisation canvas',expanded=True):
-
-    col1, col2 = st.columns([1,0.8])
-    with col1:
-        st.write("Add the current race (blue line) into anomaly training list:")
-        select_button = st.button('Add',key="add")
-    with col2:
-        st.write(f"Legend:  \n ---- : Historical  \n  :blue[----] : Training  \n  🟡 : Anomalies")
-
+with st.expander('Visualisation canvas',expanded=False):
 
     if not st.session_state.analysis_figure:
         fig2 = go.Figure()
@@ -326,40 +276,42 @@ with st.expander('Visualisation canvas',expanded=True):
     else:
         analysis_placeholder = st.plotly_chart(st.session_state.analysis_figure, theme="streamlit", use_container_width=True)
 
-with st.expander('Retrain anomaly estimator',expanded=True):
-    st_title("Anomaly detection")
 
-    str2 = "Press Add button to add the current race into the training list. \
-        Remember to use the check box to confirm the selection. Once selection has been made, \
-        press Start training button to initiate anomaly detector training process."
-    st.write(str2)
-    remove_button = st.button('Remove',key="remove")
-    train_button = st.button('Start training',key="train")
+    
+with st.expander('Visualisation canvas',expanded=True):
 
-    test_placeholder = st.empty()
-    table_placeholder = st.empty()
-    progress_placeholder = st.empty()
+    col1, col2 = st.columns([1,1],gap='Medium')
 
-    st.write('Estimator specifications:')
-    gap,col111 = st.columns([0.01,1])
-    with col111:
-        estimator1_placeholder = st.empty()
-        estimator2_placeholder = st.empty() 
-        estimator3_placeholder = st.empty()
-        estimator4_placeholder = st.empty()
-        estimator5_placeholder = st.empty() 
-        estimator6_placeholder = st.empty()
-        estimator7_placeholder = st.empty()
-    st.write('')
+    with col1:
+
+        options = st.multiselect(
+            "Choose two channels to display:",
+            ["Accel","Brake","Modes","nGear","RPM","Speed","Throttle","X","Y","Z"],
+            ["RPM", "Speed"],max_selections=2)
+        
+        modes = st.multiselect(
+            "Add modes to the scatter plot?",
+            ["Accel","Brake","Cruise","Overrun"])
+        
+        show_current = st.checkbox('Show current lap')
+        
+        analysis_2_placeholder = st.empty()
+        
+    
+    with col2:
+        
+        
+        analysis_3_placeholder = st.empty()
+        
+        
+        
+        
+        
 
 
 
-if ping_button:
-    try:
-        client.admin.command('ping')
-        db_stat_placeholder.success("Pinged the telemetry. You successfully connected to MongoDB!", icon="✅")
-    except Exception as e:
-        db_stat_placeholder.error(e, icon="🚨")
+
+
 
 
 # Race info
@@ -399,26 +351,6 @@ metric4_placeholder.metric("Compound", f"{c_lap}")
 metric5_placeholder.metric("Ambient temp", "%.1f" % a_lap + u" \u00b0C")
 
 
-if select_button:
-    row0 = st.session_state.select
-    
-    if not n in row0["Lap"].unique():
-
-        row = pd.DataFrame({'Lap':n,'Lap time':t_lap,'Position':p_lap,'Compound':c_lap,'Training':False,'Remove':False}, index=[0])
-        
-        if isinstance(row0,pd.DataFrame):
-            st.session_state.select = pd.concat([row0, row], ignore_index=True)
-        else:
-            st.session_state.select = row
-        
-
-if remove_button:
-    dfr = st.session_state.select
-    st.session_state.select = dfr[dfr['Remove'] == False]
-
-
-
-df_select = table_placeholder.data_editor(st.session_state.select,use_container_width=True)
 
 
 def AddAdditionalTelemetryData(df):
@@ -435,21 +367,8 @@ def AddAdditionalTelemetryData(df):
 
     return df
     
-def GetAnomalies(df):
 
-    model = st.session_state.model
-    scaler = st.session_state.scaler
-
-    t_test = df['Time'].values
-    X_test = df[st.session_state.features].values
-    X_test_scaled = scaler.fit_transform(X_test)
-    ypred = model.predict(X_test_scaled)
-    outlier_index = where(ypred==-1)
-    t_outliers = t_test[outlier_index]
-
-    return t_outliers
-
-def UpdatePlots(df_select):
+def UpdatePlots():
 
     # Subplots
     ToPlot = ['RPM','Brake','Throttle','Modes','Speed']
@@ -459,41 +378,14 @@ def UpdatePlots(df_select):
     fig = make_subplots(rows=n, cols=1, shared_xaxes=True, row_heights=[0.2]*len(ToPlot))
 
 
-    for index, row in df_select.iterrows():
-
-        # Skip to prevent accessing mongo
-        if (not row['Training']):
-            continue
-            
-        # Read from mongo
-        race_dict = dbcol.find_one({"LapNumber": row['Lap']})
-        tel = race_dict['Telemetry']
-        df = pd.DataFrame(tel)
-        df = AddAdditionalTelemetryData(df)
-
-        if row['Training']:
-            fig = PlotTelemetry(fig,df,ToPlot,"lightgrey",0.3,f"Training")
-
-        #if row['Testing']:
-        #    fig = PlotTelemetry(fig,df,ToPlot,"orange",0.3,f"Testing")
-
     # Read from mongo
     lap = st.session_state.lap
     race_dict = dbcol.find_one({"LapNumber": lap})
     tel = race_dict['Telemetry']
     df = pd.DataFrame(tel)
     df = AddAdditionalTelemetryData(df)
-    t_outliers = GetAnomalies(df)
-    
-    fig = PlotTelemetry(fig,df,ToPlot,"deepskyblue",1,f"Lap {lap}")
-    fig = PlotAnomaly(fig,df,ToPlot,f"Lap {lap}",t_outliers)
 
-    # Make legend unique
-    #names = set()
-    #fig.for_each_trace(
-    #    lambda trace:
-    #        trace.update(showlegend=False)
-    #        if (trace.name in names) else names.add(trace.name))
+    fig = PlotTelemetry(fig,df,ToPlot,"deepskyblue",1,f"Lap {lap}")
 
     # Hide legend for now
     fig.update_layout(showlegend=False)
@@ -504,62 +396,93 @@ def UpdatePlots(df_select):
     return fig
 
 
-fig = UpdatePlots(df_select)
+fig = UpdatePlots()
 st.session_state.analysis_figure = fig
 analysis_placeholder.plotly_chart(fig, theme="streamlit",height=1300)
 
-# Train anomalies
-if train_button:
-
-    with progress_placeholder, st.spinner('Training in progress'):
-
-        dff=[]
-        offset = 0
-        for index,row in df_select.iterrows():
-            df = GetRaceData(st.session_state.year,st.session_state.race,row['Lap'])
-            df["Time"] = df["Time"] + offset
-            #df["Time"] = df["Time"]
-            offset = df.loc[df.index[-1],"Time"]
-            dff.append(df)
-        df_train = pd.concat(dff, axis=0).reset_index()
-
-        X_train = df_train[st.session_state.features].values
-        t_train = df_train['Time'].values 
 
 
-        # Standardize the data
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-
-        model = LocalOutlierFactor(novelty=True)
-        model.fit(X_train_scaled)
-
-        #filename = 'model.sav'
-        #pickle.dump(model, open(filename, 'wb'))
-        st.session_state.model = model
-
-        #filename = 'scaler.sav'
-        #pickle.dump(scaler, open(filename, 'wb'))
-        st.session_state.scaler = scaler
-
-        fig = UpdatePlots(df_select)
-        st.session_state.analysis_figure = fig
-        analysis_placeholder.plotly_chart(fig, theme="streamlit",height=1300)
 
 
-    progress_placeholder.success('Model updated!', icon="✅")
+def UpdateScatter():
+
+    fig = go.Figure()
+
+    if len(options)>1:
+        
+        data = []
+
+        #n = range(1,st.session_state.total_laps+1)
+        n = range(10,20)
+        for lap in n:
+            
+            race_dict = dbcol.find_one({"LapNumber": lap})
+            tel = race_dict['Telemetry']
+            df = pd.DataFrame(tel)
+            df = AddAdditionalTelemetryData(df)     
+            
+            color_dict = {
+                "Overrun": "red",
+                "Brake": "yellow",
+                "Cruise": "lime"
+            }               
+            
+            fig.add_trace(go.Scatter(x=df[options[0]], y=df[options[1]],
+                            mode='lines',
+                            line=dict(color='rgba(135, 206, 250, 0.03)',width=7),
+                            name='markers'))
+            
+            color_dict = {
+                "Overrun": 'rgba(255, 255, 0, 0)',
+                "Brake": 'rgba(0, 0, 255, 0)',
+                "Cruise": 'rgba(0, 255, 255, 0)',
+                "Accel":'rgba(255, 0, 0, 0)',
+            }    
+                       
+            for x in color_dict:
+                if x in modes:
+                    a = color_dict[x]
+                    color_dict[x] = a.replace("0)", "0.1)")
+
+            color = df['Modes'].map(color_dict)
+            
+            
+            fig.add_trace(go.Scatter(x=df[options[0]], y=df[options[1]],
+                mode='markers',
+                marker_color=color,
+                name='markers'))
+             
+    if show_current:
+        lap = st.session_state.lap   
+        race_dict = dbcol.find_one({"LapNumber": lap})
+        tel = race_dict['Telemetry']
+        df = pd.DataFrame(tel)
+        df = AddAdditionalTelemetryData(df)     
+        
+        fig.add_trace(go.Scatter(x=df[options[0]], y=df[options[1]],
+                    mode='lines',
+                    line=dict(color='rgba(135, 206, 100, 0.2)',width=2),
+                    name='markers'))
 
 
-# Diplay estimator specs
-estimator1_placeholder.text(f'1. Detector type: {st.session_state.model.__module__}')
-estimator2_placeholder.text(f'2. Learning mode: Unsupervised learning')        
-estimator3_placeholder.text(f'3. Novelty: ' + str(st.session_state.model.__dict__['novelty']))
-estimator4_placeholder.text(f'4. Number of neighbors: ' + str(st.session_state.model.__dict__['n_neighbors']))
-estimator5_placeholder.text(f'5. Number of samples: ' + str(st.session_state.model.__dict__['n_samples_fit_']))
-estimator6_placeholder.text(f'6. Transformation: {st.session_state.scaler.__class__.__name__}')
-estimator7_placeholder.text(f'7. Features: ' + ", ".join(st.session_state.features))
+
+    
+    fig.update_layout(xaxis_title=options[0], yaxis_title=options[1])
+
+    fig.update_layout(showlegend=False)
+    fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(height=500)
 
 
+    return fig
+
+
+
+
+
+fig2 = UpdateScatter()
+st.session_state.analysis_2_figure = fig2
+analysis_2_placeholder.plotly_chart(fig2, theme="streamlit",height=500)
 
 
 
