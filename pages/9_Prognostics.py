@@ -354,7 +354,7 @@ with st.expander('Analysis',expanded=True):
         fig.update_layout(barmode='overlay')
         fig.update_layout(margin=dict(l=20, r=20, t=10, b=20),height=300)
         fig.update_layout(xaxis_title='RPM', yaxis_title="Frequency")
-        st.plotly_chart(fig, theme="streamlit")
+        st.plotly_chart(fig, theme="streamlit",use_container_width=True)
 
     with col2:
         st.subheader("Normal+Failed lap RPM distributions")
@@ -373,7 +373,7 @@ with st.expander('Analysis',expanded=True):
         fig.update_layout(barmode='overlay')
         fig.update_layout(margin=dict(l=20, r=20, t=10, b=20),height=300)
         fig.update_layout(xaxis_title='RPM', yaxis_title="Frequency")
-        st.plotly_chart(fig, theme="streamlit")
+        st.plotly_chart(fig, theme="streamlit",use_container_width=True)
 
 
 
