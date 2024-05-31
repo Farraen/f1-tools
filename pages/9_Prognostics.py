@@ -309,7 +309,8 @@ with st.expander('Data visualisation',expanded=True):
             st.text(f'Status: Completed race')
             complete_flag = 1
         else:
-            st.text(f'Status: Retired at lap {df_laps['LapNumber'].iloc[-1]:.0f}')
+            lp_number = np.round(df_laps['LapNumber'].iloc[-1])
+            st.text('Status: Retired at lap ' + str(lp_number))
             complete_flag = 0
         last_lap = df_laps['LapNumber'].iloc[-1]
 
