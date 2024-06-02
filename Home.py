@@ -41,13 +41,14 @@ with col21:
     st.write('Same PU decision engine dashboard but powered by LLM (Large Language Model). It can also make recommendations based on current PU strategy situation. The LLM persona has been tuned to mimic a junior race engineer.')
 
 with col31:
+    
+    
     if st.button('Open tool', use_container_width=True,key=3):
-        switch_page("AI Race Engineer")
+        switch_page("Model Based Calibration")
     image = read_image("images/Image_3.png")
     st.image(image)
-    st.subheader('AI Junior Race Engineer')
-    st.write('A tuned LLM (Large Language Model) persona to mimic a junior race engineer. \
-             Useful to ask anything within the racing domain. For future development, it can connect to the MongoDB database to extract and process race telemetery data. Powered by OpenAI language model.')
+    st.subheader('Model Based Calibration Methodology')
+    st.write('Model-based Calibration is a process to optimally tune parameters for systems. Involves creation of DoE (Design of Experiments), creating models and optimisation.') 
     
 
 st.header(' ')
@@ -86,9 +87,9 @@ with col32:
 st.header(' ')
 st.header(' ')
 
-gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
+gap,col13,gap,col23,gap,col33,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
 
-with col12:
+with col13:
     if st.button('Open tool', use_container_width=True,key=7):
         switch_page("Tire Strategy")
     image = read_image("images/Image_7.png")
@@ -96,19 +97,36 @@ with col12:
     st.subheader('Tire Strategy')
     st.write('A decision engine platform for tire change strategy. It can help race engineers to predict optimal lap for tire change and compound selection. Genetic algorithm is used as the decision engine to generate tire change solutions.')
     
-with col22:
+with col23:
     if st.button('Open tool', use_container_width=True,key=8):
-        switch_page("Data Mining")
+        switch_page("Prognostics")
     image = read_image("images/Image_8.png")
     st.image(image)
-    st.subheader('Data Mining')
-    st.write('A data exploration tool for finding underlying patterns.')
+    st.subheader('Prognostics')
+    st.write('A simple dashboard to investigate early failures from race telemetry data.')
     
-with col32:
+    
+with col33:
+
     if st.button('Open tool', use_container_width=True,key=9):
-        switch_page("Prognostics")
+        switch_page("AI Race Engineer")
     image = read_image("images/Image_9.png")
     st.image(image)
-    st.subheader('Prognostics')
-    st.write('A tool for investigating early failures.')
+    st.subheader('AI Junior Race Engineer')
+    st.write('A tuned LLM (Large Language Model) persona to mimic a junior race engineer. \
+             Useful to ask anything within the racing domain. For future development, it can connect to the MongoDB database to extract and process race telemetery data. Powered by OpenAI language model.')
     
+
+    
+st.header(' ')
+st.header(' ')
+
+gap,col14,gap,col24,gap,col34,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
+
+with col14:
+    if st.button('Open tool', use_container_width=True,key=10):
+        switch_page("Data Mining")
+    image = read_image("images/Image_10.png")
+    st.image(image)
+    st.subheader('Data Mining (Under development)')
+    st.write('A data exploration tool for finding underlying patterns and trends.')
