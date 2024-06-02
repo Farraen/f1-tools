@@ -318,7 +318,7 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
     col11, col22, col33 = st.columns([1,1,1],gap='large')  
 
     with col11:
-        training = st.button('Optimise')
+        optimise = st.button('Optimise')
 
 
        
@@ -328,7 +328,7 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
 
         plot_handle = st.empty()
         
-        st_model_handle_1 = st.empty()
+        st_optimise_handle_1 = st.empty()
         if not st.session_state.optimise_figure_1:
             fig = go.Figure()
             fig.add_trace(go.Scatter3d(x=[0],y=[0],z=[0],mode='markers'))
@@ -336,16 +336,16 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
                             yaxis_title_text="Torque",  
                             zaxis_title_text="VGT Position")
             fig.update_layout(margin=dict(l=20, r=20, t=20, b=20),height=300)
-            st_model_handle_1.plotly_chart(fig, theme="streamlit",use_container_width=True)
+            st_optimise_handle_1.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
-            st_model_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
+            st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
         
     with col33:    
         st.text("EGR Map")
 
         plot_handle = st.empty()
         
-        st_model_handle_2 = st.empty()
+        st_optimise_handle_2 = st.empty()
         if not st.session_state.optimise_figure_2:
             fig = go.Figure()
             fig.add_trace(go.Scatter3d(x=[0],y=[0],z=[0],mode='markers'))
@@ -353,9 +353,9 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
                             yaxis_title_text="Torque",  
                             zaxis_title_text="VGT Position")
             fig.update_layout(margin=dict(l=20, r=20, t=20, b=20),height=300)
-            st_model_handle_2.plotly_chart(fig, theme="streamlit",use_container_width=True)
+            st_optimise_handle_2.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
-            st_model_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
+            st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
         
 
     
@@ -466,8 +466,6 @@ if training:
     
 
 
-
-    index = 0
     
     yout = model.predict(X_train)
     y_pred = pd.DataFrame(yout,columns=outputs) 
