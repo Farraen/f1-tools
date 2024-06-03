@@ -21,6 +21,9 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import time
 import warnings
+from scipy import interpolate
+from scipy.optimize import minimize, LinearConstraint
+
 warnings.filterwarnings("ignore")
 
 
@@ -54,7 +57,11 @@ if 'doe' not in st.session_state:
 
 if 'test_result' not in st.session_state:
     st.session_state.test_result = []
-
+    
+if 'model' not in st.session_state:
+    engine_model = CatBoostRegressor()
+    engine_model.load_model("engine_model")
+    st.session_state.engine_model = engine_model
 
 
 
@@ -82,9 +89,6 @@ if 'optimise_figure_1' not in st.session_state:
 if 'optimise_figure_2' not in st.session_state:
     st.session_state.optimise_figure_2 = []   
     
-    
-    
-    
 if 'variables' not in st.session_state:
 
     st.session_state.df_variables = pd.DataFrame(
@@ -96,7 +100,29 @@ if 'variables' not in st.session_state:
         ]
     )
 
+if 'bpx' not in st.session_state:
+    nbpx = 5
+    nbpy = 5
+    df_variables = st.session_state.df_variables
+    bpx = np.linspace(df_variables.iloc[0,1],df_variables.iloc[0,2],nbpx)
+    bpy = np.linspace(df_variables.iloc[1,1],df_variables.iloc[1,2],nbpy)
 
+    xm, ym = np.meshgrid(bpx, bpy) 
+    xl = xm.flatten()
+    yl = ym.flatten()
+
+    st.session_state.bpx = bpx
+    st.session_state.bpy = bpy
+
+    st.session_state.xl = xl
+    st.session_state.yl = yl
+    
+    st.session_state.z_vgt = np.full(np.shape(xl), 40)
+    st.session_state.z_egr = np.full(np.shape(xl), 0.15)
+    
+    
+    
+    
 df_outputs = pd.DataFrame(
         [
             {"Name": "BSFC_ind", "Lower": 0.0, "Upper": 1000.0, "Step":5},
@@ -124,8 +150,9 @@ def read_image(img_path):
 
 # Initialisation 
 
-model = CatBoostRegressor()
-model.load_model("engine_model")
+# Load virtual engine
+model_virtual_enging = CatBoostRegressor()
+model_virtual_enging.load_model("virtual_engine")
 
 
     
@@ -272,6 +299,7 @@ with st.expander('Step 4: Create engine ML model',expanded=True):
 
     with col11:
         training = st.button('Train model')
+        model_save = st.button('Save model')
         response = st.selectbox("Select responses to plot",outputs)     
         metric_1 = st.empty()
         metric_2 = st.empty()
@@ -303,21 +331,27 @@ with st.expander('Step 4: Create engine ML model',expanded=True):
         plot_handle = st.empty()
         
         st_model_handle_2 = st.empty()
-        if not st.session_state.accuracy_figure_1:
+        if not st.session_state.accuracy_figure_2:
             fig = go.Figure()
             fig.update_layout(xaxis_title='Actual', yaxis_title="Prediction")
             fig.update_layout(margin=dict(l=20, r=20, t=20, b=20),height=300)
             st_model_handle_2.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
-            st_model_handle_2.plotly_chart(st.session_state.accuracy_figure_1, theme="streamlit",use_container_width=True)
+            st_model_handle_2.plotly_chart(st.session_state.accuracy_figure_2, theme="streamlit",use_container_width=True)
         
                 
          
 with st.expander('Step 5: Optimise calibration maps',expanded=True):
     st.text("")
+    st.subheader("Panel not ready. Work in progress!")
     col11, col22, col33 = st.columns([1,1,1],gap='large')  
 
     with col11:
+
+        nbpx = st.number_input("Number of x breakpoints",value=5)
+        nbpy = st.number_input("Number of y breakpoints",value=5)
+
+        initialise_map = st.button('Initialise')
         optimise = st.button('Optimise')
 
 
@@ -339,6 +373,8 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
             st_optimise_handle_1.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
             st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
+
+
         
     with col33:    
         st.text("EGR Map")
@@ -356,9 +392,8 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
             st_optimise_handle_2.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
             st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
-        
+   
 
-    
 
 if generate_doe:
     
@@ -408,7 +443,7 @@ xhat = []
 for var in edited_df.iterrows():    
     val = st.session_state[var[1]['Name']]
     xhat.append(val)
-yhat = model.predict(xhat)
+yhat = model_virtual_enging.predict(xhat)
 df_test = pd.DataFrame({'Name':df_outputs['Name'],'Value':list(yhat)}) 
 fig = px.bar(df_test, x="Value", y="Name", orientation='h')
 fig.update_layout(margin=dict(l=10, r=10, t=0, b=10),height=300)
@@ -420,7 +455,7 @@ if testing:
     doe = st.session_state.doe
     res = []
     for row in doe.iterrows():
-        yhat = model.predict(row[1])
+        yhat = model_virtual_enging.predict(row[1])
         res.append(list(yhat))
         df_res = pd.DataFrame(res,columns=outputs)        
         
@@ -483,7 +518,7 @@ if training:
     yout = model.predict(X_test)
     y_pred = pd.DataFrame(yout,columns=outputs) 
     a = y_pred[response]
-    b = y_train[response]
+    b = y_test[response]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=b,y=a,mode="markers",name="-"))
     #fig.update_traces(opacity=0.75)
@@ -496,7 +531,77 @@ if training:
     metric_3.success('Done!')
 
 
+if model_save:
+    st.session_state.model.save_model("engine_model")
 
+
+   
+if initialise_map:
+    df_variables = st.session_state.df_variables
+    bpx = np.linspace(df_variables.iloc[0,1],df_variables.iloc[0,2],nbpx)
+    bpy = np.linspace(df_variables.iloc[1,1],df_variables.iloc[1,2],nbpy)
+
+    xm, ym = np.meshgrid(bpx, bpy) 
+    xl = xm.flatten()
+    yl = ym.flatten()
+
+    st.session_state.bpx = bpx
+    st.session_state.bpy = bpy
+
+    st.session_state.xl = xl
+    st.session_state.yl = yl
+    
+    st.session_state.z_vgt = np.full(np.shape(xl), 40)
+    st.session_state.z_egr = np.full(np.shape(xl), 0.15)
+    
+    a = np.array(st.session_state.z_vgt).reshape(nbpx,nbpy).tolist()
+    fig = go.Figure()
+    fig.add_trace(go.Surface(z=a,colorscale ='blues'))
+    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    st.session_state.optimise_figure_1 = fig
+    st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
+
+
+    a = np.array(st.session_state.z_egr).reshape(nbpx,nbpy).tolist()
+    fig = go.Figure()
+    fig.add_trace(go.Surface(z=a,colorscale ='blues'))
+    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    st.session_state.optimise_figure_2 = fig
+    st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
+
+
+def rosen(x):
+    """The Rosenbrock function"""
+    import random
+    egr = np.full(np.shape(st.session_state.xl), 0.1)
+    
+    x = np.full(np.shape(st.session_state.xl), random.randrange(1, 80))
+    xhat = pd.DataFrame(
+        {'SPEED_A':st.session_state.xl,'TORQUE_R':st.session_state.yl,'BobOV_XPC_VGT':x,'egr_vlv_position':egr}
+    )
+    res = st.session_state.engine_model.predict(xhat)
+    df_res_opt = pd.DataFrame(res,columns=outputs)     
+    
+    J = df_res_opt['BSFC_ind'].sum()
+    
+    
+    return J
+
+if optimise:
+    
+    x0 = st.session_state.z_vgt
+    res = minimize(rosen, x0, method='trust-constr',
+               options={'maxiter': 10, 'disp': True})
+    
+    st.session_state.z_vgt = res.x
+
+
+    a = np.array(st.session_state.z_vgt).reshape(nbpx,nbpy).tolist()
+    fig = go.Figure()
+    fig.add_trace(go.Surface(z=a,colorscale ='blues'))
+    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    st.session_state.optimise_figure_1 = fig
+    st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
 
 
 if None:
@@ -535,6 +640,6 @@ if None:
     model.fit(X_train, y_train)
     score_train = model.score(X_train, y_train)
     score_test = model.score(X_test, y_test)
-    model.save_model("engine_model")
+    model.save_model("virtual_engine")
     score_train
     score_test

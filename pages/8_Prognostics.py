@@ -63,11 +63,9 @@ if 'total_laps' not in st.session_state:
     st.session_state.total_laps = []
     st.session_state.race_name = []
     
-    
 if 'window' not in st.session_state:
     st.session_state.window = [11600,12000]
        
-
 if 'select' not in st.session_state:
     #st.session_state.select = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
     df = pd.read_pickle("data/Page4_init.pkl")  
