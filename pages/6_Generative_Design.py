@@ -67,24 +67,24 @@ if "gen_number" not in st.session_state:
     st.session_state.gen_number = []
 
 if "solution" not in st.session_state:
-    st.session_state.solution_target = []
-    st.session_state.solution_best = []
-    st.session_state.solution_initial = []
+    st.session_state.solution_target_gen = []
+    st.session_state.solution_best_gen = []
+    st.session_state.solution_initial_gen = []
     st.session_state.columns = []
     st.session_state.optimised = False
 
-if "results" not in st.session_state:
-    st.session_state.results = []
+if "results_gen" not in st.session_state:
+    st.session_state.results_gen = []
 
-if "scaler" not in st.session_state:
-    st.session_state.scaler = []
+if "scaler_gen" not in st.session_state:
+    st.session_state.scaler_gen = []
 
-if "fitness" not in st.session_state:
-    st.session_state.fitness = []
+if "fitness_gen" not in st.session_state:
+    st.session_state.fitness_gen = []
 
 df = load_range('data/Page5_range.csv')
 st.session_state.solution_baseline = df.iloc[0,:].to_dict()
-st.session_state.solution_best = df.iloc[3,:].to_dict()
+st.session_state.solution_best_gen = df.iloc[3,:].to_dict()
 st.session_state.columns = df.columns
 st.session_state.df_gen = df
 
@@ -148,9 +148,9 @@ with st.expander('Performance visualisation', expanded=True):
         st_title('Vehicle parameters')
         param_dict = {}
         for name in df.columns:
-            init = st.session_state.solution_best[name]
+            init = st.session_state.solution_best_gen[name]
             param_dict[name] = st.slider(name,np.double(df[name].Min), np.double(df[name].Max), np.double(init),key=name)
-        st.session_state.solution_best = param_dict
+        st.session_state.solution_best_gen = param_dict
 
     with col2:
         st_title('Performance metrics')
@@ -265,7 +265,7 @@ def simulate_optimise(inputs):
 
 def plot_fitness():
 
-    if not st.session_state.fitness:
+    if not st.session_state.fitness_gen:
 
         fig = px.scatter(x=[0], y=[0])
         fig.update_layout(
@@ -275,12 +275,12 @@ def plot_fitness():
             xaxis_range=[0,10],
             showlegend=True)        
     else:
-        x = list(range(0,len(st.session_state.fitness)))
+        x = list(range(0,len(st.session_state.fitness_gen)))
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=x,
-            y=st.session_state.fitness,
+            y=st.session_state.fitness_gen,
             mode='lines',
             line = dict(width = 4, color = "lightblue"),
             marker = dict(color = "cyan", size = 15, opacity = 0.8),
@@ -319,7 +319,7 @@ def DamageModel(s0,vmax,tacc):
 def plot():
 
     t_base_fil, v_base_fil, t_base_full, v_base_full = simulate(st.session_state.solution_baseline)
-    t_mod_fil, v_mod_fil, t_mod_full, v_mod_full = simulate(st.session_state.solution_best)
+    t_mod_fil, v_mod_fil, t_mod_full, v_mod_full = simulate(st.session_state.solution_best_gen)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -365,7 +365,7 @@ def plot():
     dmax = np.round(v_max_mod-v_max_base,2)
 
     durab_base, perf_base = DamageModel(st.session_state.solution_baseline,v_max_base,t_100_base)
-    durab_mod, perf_mod = DamageModel(st.session_state.solution_best,v_max_mod,t_100_mod)
+    durab_mod, perf_mod = DamageModel(st.session_state.solution_best_gen,v_max_mod,t_100_mod)
     ddurab = np.round(durab_mod-durab_base,1)
     dperf = np.round(perf_mod-perf_base,1)
 
@@ -429,7 +429,7 @@ def on_generation(ga_instance):
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
 
-    st.session_state.fitness.append(solution_fitness)
+    st.session_state.fitness_gen.append(solution_fitness)
 
     plot_fitness()
 
@@ -445,7 +445,7 @@ if generate:
 
 
         st.session_state.optimised = False
-        st.session_state.fitness = []
+        st.session_state.fitness_gen = []
 
         fitness_function = fitness_func(bias)
         num_parents_mating = 4
@@ -485,10 +485,10 @@ if generate:
     time.sleep(1)
     my_bar.empty()    
 
-    st.session_state.results =  pd.DataFrame.from_dict(result).T
+    st.session_state.results_gen =  pd.DataFrame.from_dict(result).T
     
 
-df = st.session_state.results
+df = st.session_state.results_gen
 
 
 

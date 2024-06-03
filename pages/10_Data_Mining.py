@@ -47,9 +47,6 @@ if 'db_status' not in st.session_state:
 if 'df_laps' not in st.session_state:
     st.session_state.df_laps = []
 
-if 'selected' not in st.session_state:
-    st.session_state.selected = []
-
 if 'year' not in st.session_state:
     st.session_state.year = []
 
@@ -63,11 +60,6 @@ if 'total_laps' not in st.session_state:
     st.session_state.total_laps = []
     st.session_state.race_name = []
 
-if 'select' not in st.session_state:
-    #st.session_state.select = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
-    df = pd.read_pickle("data/Page4_init.pkl")  
-    #df.columns = ["Lap", "Lap time", "Position", "Compound", "Training","Remove"]
-    st.session_state.select = df
     #df.to_pickle("./Page4_init.pkl")
 
 if 'analysis_figure' not in st.session_state:
@@ -79,14 +71,6 @@ if 'analysis_figure_2' not in st.session_state:
 if 'analysis_figure_3' not in st.session_state:
     st.session_state.analysis_figure_3 = []
 
-if 'model' not in st.session_state:
-    filename = 'data/Page4_model.sav'
-    model = pickle.load(open(filename, 'rb'))
-    st.session_state.model = model    
-    
-    filename = 'data/Page4_scaler.sav'
-    scaler = pickle.load(open(filename, 'rb'))
-    st.session_state.scaler = scaler    
 
 Driver = "Max"
 
@@ -123,25 +107,11 @@ def read_image(img_path):
     image = np.array(im)
     return image
 
-# For loading model
-@st.cache_resource
-def load_model():
-    filename = 'data/Page4_model.sav'
-    model = pickle.load(open(filename, 'rb'))
-    st.session_state.model = model
-
-    filename = 'data/Page4_scaler.sav'
-    scaler = pickle.load(open(filename, 'rb'))
-    st.session_state.scaler = scaler
-
-
-    return model, scaler
 
 
 # Initialise
 
 # Load anomaly detection model
-st.session_state.model, st.session_state.scaler = load_model()
 st.session_state.features = ["Distance","RPM","Speed","Throttle"]
 
 

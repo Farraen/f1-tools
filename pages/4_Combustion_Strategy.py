@@ -42,11 +42,11 @@ def st_text(text):
 if "comb_model" not in st.session_state:
     st.session_state.comb_model = []
 
-if "iter" not in st.session_state:
-    st.session_state.iter = []
+if "iter_comb" not in st.session_state:
+    st.session_state.iter_comb = []
 
-if "fitness" not in st.session_state:
-    st.session_state.fitness = []
+if "fitness_comb" not in st.session_state:
+    st.session_state.fitness_comb = []
 
 if "pressure_plot_handle" not in st.session_state:
     st.session_state.pressure_plot_handle = []
@@ -266,7 +266,7 @@ plot_result()
 
 def plot_fitness():
 
-    if not st.session_state.fitness:
+    if not st.session_state.fitness_comb:
 
         fig = px.scatter(x=[0], y=[0])
         fig.update_layout(
@@ -276,12 +276,12 @@ def plot_fitness():
             xaxis_range=[0,10],
             showlegend=True)        
     else:
-        x = list(range(0,len(st.session_state.fitness)))
+        x = list(range(0,len(st.session_state.fitness_comb)))
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=x,
-            y=st.session_state.fitness,
+            y=st.session_state.fitness_comb,
             mode='lines',
             line = dict(width = 4, color = "lightblue"),
             marker = dict(color = "cyan", size = 15, opacity = 0.8),
@@ -322,10 +322,10 @@ def on_generation(ga_instance):
 
     plot_result()
 
-    st.session_state.iter = st.session_state.iter + 1
-    my_bar.progress(st.session_state.iter/st.session_state.gen_number)
+    st.session_state.iter_comb = st.session_state.iter_comb + 1
+    my_bar.progress(st.session_state.iter_comb/st.session_state.gen_number)
 
-    st.session_state.fitness.append(solution_fitness)
+    st.session_state.fitness_comb.append(solution_fitness)
 
     plot_fitness()
 
@@ -333,13 +333,13 @@ def on_generation(ga_instance):
 if optimise:
 
     st.session_state.optimised = False
-    st.session_state.fitness = []
+    st.session_state.fitness_comb = []
 
     fitness_function = fitness_func
     num_parents_mating = 4
     sol_per_pop = 20
     num_genes = 3
-    st.session_state.iter = 0
+    st.session_state.iter_comb = 0
     ga_instance = pygad.GA(num_generations=st.session_state.gen_number,
                        num_parents_mating=num_parents_mating,
                        fitness_func=fitness_function,
@@ -354,7 +354,7 @@ if optimise:
     ga_instance.run()
 
     st.session_state.optimised = True
-    st.session_state.iter = []
+    st.session_state.iter_comb = []
 
     my_bar.empty()
     st.rerun()
@@ -364,7 +364,7 @@ if reset:
 
     st.session_state.solution_best = st.session_state.solution_initial
     st.session_state.optimised = False
-    st.session_state.iter = []
+    st.session_state.iter_comb = []
     st.rerun()
 
 plot_fitness()

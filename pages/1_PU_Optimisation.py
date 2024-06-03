@@ -29,17 +29,17 @@ if 'pu_fitness_trace' not in st.session_state:
 if 'pu_results' not in st.session_state:
     st.session_state.pu_results = []
 
-if 'df' not in st.session_state:
-    st.session_state.df = []
+if 'df_1' not in st.session_state:
+    st.session_state.df_1 = []
 
-if 'bias' not in st.session_state:
-    st.session_state.bias = 2
+if 'pu_bias' not in st.session_state:
+    st.session_state.pu_bias = 2
 
 if 'gen_number' not in st.session_state:
     st.session_state.gen_number = []
 
-if "iter" not in st.session_state:
-    st.session_state.iter = []
+if "pu_iter" not in st.session_state:
+    st.session_state.pu_iter = []
 
 
 # --------  For page layout  ---------------
@@ -84,7 +84,7 @@ def interp2(X,Y,Z,Xv,Yv):
 
 def DamageModel(x):
 
-    dtt = st.session_state.df
+    dtt = st.session_state.df_1
 
     ICE_RUL  = [80, 70, 95]
     ICE_KW  = [425, 400, 450]
@@ -174,8 +174,8 @@ def DamageModel(x):
 
     failedPU = RUL.loc[np.where(RUL["RUL"] < 0)[0],'Index'].to_numpy()
 
-    bias = (st.session_state.bias-1)/2
-    fitness_value = PowerLoss - (bias)*np.sum(failedPU)
+    pu_bias = (st.session_state.pu_bias-1)/2
+    fitness_value = PowerLoss - (pu_bias)*np.sum(failedPU)
 
 
     return fitness_value, PowerLoss, PowerLeft, RUL, PowerReduced
@@ -308,19 +308,19 @@ def plot_iter():
     st.session_state.pu_iter_placeholder.plotly_chart(fig,use_container_width=True,height=300)
 
 def change_bias():
-    bias = st.session_state.slider
-    if bias == 'High Performance':
-        st.session_state.bias = 1
-    elif bias == 'Longer RUL':
-        st.session_state.bias = 10
+    pu_bias = st.session_state.slider
+    if pu_bias == 'High Performance':
+        st.session_state.pu_bias = 1
+    elif pu_bias == 'Longer RUL':
+        st.session_state.pu_bias = 10
     else:
-        st.session_state.bias = int(bias)
+        st.session_state.pu_bias = int(pu_bias)
 
 # --------  For optimisation  -------------
 
 def make_full_solution(solution):
-    if not st.session_state.df["PU Actual"].isna().all():
-        dff = st.session_state.df.copy()
+    if not st.session_state.df_1["PU Actual"].isna().all():
+        dff = st.session_state.df_1.copy()
         tracks_left_idx = dff["PU Actual"].isna()
         actual = dff["PU Actual"].to_numpy()        
         solutionFull = dff["PU Projection"].to_numpy()
@@ -348,11 +348,11 @@ def on_generation(ga_instance):
 
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
 
-    st.session_state.df["PU Projection"] = solution
-    st.session_state.df["PowerLeft"] = PowerLeft["PowerLeft"]
-    st.session_state.df["PowerReduced"] = PowerReduced["PowerReduced"]
-    st.session_state.df["RUL"] = RUL["RUL"]
-    dts = st.session_state.df.copy()
+    st.session_state.df_1["PU Projection"] = solution
+    st.session_state.df_1["PowerLeft"] = PowerLeft["PowerLeft"]
+    st.session_state.df_1["PowerReduced"] = PowerReduced["PowerReduced"]
+    st.session_state.df_1["RUL"] = RUL["RUL"]
+    dts = st.session_state.df_1.copy()
 
     index = ga_instance.generations_completed
     st.session_state.pu_results[index] = dts
@@ -360,8 +360,8 @@ def on_generation(ga_instance):
     st.session_state.pu_fitness_trace.append(solution_fitness)
     dta = pd.DataFrame(st.session_state.pu_fitness_trace,columns=["value"])
 
-    st.session_state.iter = st.session_state.iter + 1
-    my_bar.progress(st.session_state.iter/st.session_state.gen_number,text='Restrategise PU allocation. Please wait...')
+    st.session_state.pu_iter = st.session_state.pu_iter + 1
+    my_bar.progress(st.session_state.pu_iter/st.session_state.gen_number,text='Restrategise PU allocation. Please wait...')
 
 
     fig = go.Figure()
@@ -379,16 +379,16 @@ def optimisation_sequence():
     fitness_function = fitness_func
 
     # Only optimise track with no actual PU results
-    tracks_left = st.session_state.df["PU Actual"].isna().sum()
+    tracks_left = st.session_state.df_1["PU Actual"].isna().sum()
 
     num_parents_mating = 4
     sol_per_pop = 5
     num_genes = int(tracks_left)
-    st.session_state.iter = 0
+    st.session_state.pu_iter = 0
 
     # Check PUs left
     pu_available = [1,2,3]
-    PU_failed = st.session_state.df["PU Failures"].dropna().unique().tolist()
+    PU_failed = st.session_state.df_1["PU Failures"].dropna().unique().tolist()
     for item in PU_failed:
         if item in pu_available:
             pu_available.remove(item)
@@ -414,7 +414,7 @@ def optimisation_sequence():
     
 def reoptimise():
     
-    df = st.session_state.df.copy()
+    df = st.session_state.df_1.copy()
     mode_requested = []
     flag = False
     for index, updates in st.session_state["mastertable"].items():
@@ -433,7 +433,7 @@ def reoptimise():
                             flag = True
 
 
-    st.session_state.df = df
+    st.session_state.df_1 = df
 
     if "PU Actual" in mode_requested:
         if flag:
@@ -449,12 +449,12 @@ def reoptimise():
 
 #---------- Load in track information -------------
    
-if not isinstance(st.session_state.df,pd.DataFrame):
+if not isinstance(st.session_state.df_1,pd.DataFrame):
     
     # Initial condition
     df = pd.read_excel('data/Page1_track.xlsx')
     
-    st.session_state.df = df.copy()
+    st.session_state.df_1 = df.copy()
     df["PU Failures"] = np.nan
     df["PU Actual"] = np.nan
     df["PU Projection"] = np.nan
@@ -471,19 +471,19 @@ if not isinstance(st.session_state.df,pd.DataFrame):
     df.pop('No')
 
     # Going to be the main table
-    st.session_state.df = df.copy()
+    st.session_state.df_1 = df.copy()
 
 else:
 
     # Simulate and repopulate the master table
-    df = st.session_state.df
+    df = st.session_state.df_1
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
     df["PowerLeft"] = PowerLeft["PowerLeft"]
     df["PowerReduced"] = PowerReduced["PowerReduced"]
     df["RUL"] = RUL["RUL"]
     
     # Going to be the main table
-    st.session_state.df = df
+    st.session_state.df_1 = df
 
 
 
@@ -519,7 +519,7 @@ with st.expander('PU selection optimisation',expanded=True):
     my_bar = st.progress(0)
 
     # Highligh rows depending on type (actual or projection)
-    df_track_styled = st.session_state.df.copy()
+    df_track_styled = st.session_state.df_1.copy()
 
     actual_row = np.where(~df_track_styled["PU Actual"].isna())[0]
     projection_row = np.where(df_track_styled["PU Actual"].isna())[0]

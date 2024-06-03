@@ -47,8 +47,8 @@ if 'db_status' not in st.session_state:
 if 'df_laps' not in st.session_state:
     st.session_state.df_laps = []
 
-if 'selected' not in st.session_state:
-    st.session_state.selected = []
+if 'selected_prog' not in st.session_state:
+    st.session_state.selected_prog = []
 
 if 'year' not in st.session_state:
     st.session_state.year = []
@@ -66,11 +66,11 @@ if 'total_laps' not in st.session_state:
 if 'window' not in st.session_state:
     st.session_state.window = [11600,12000]
        
-if 'select' not in st.session_state:
-    #st.session_state.select = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
+if 'select_race_lap' not in st.session_state:
+    #st.session_state.select_race_lap = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
     df = pd.read_pickle("data/Page4_init.pkl")  
     #df.columns = ["Lap", "Lap time", "Position", "Compound", "Training","Remove"]
-    st.session_state.select = df
+    st.session_state.select_race_lap = df
     #df.to_pickle("./Page4_init.pkl")
 
 if 'analysis_figure' not in st.session_state:

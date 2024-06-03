@@ -13,9 +13,9 @@ st.set_page_config(layout='wide')
 st.subheader('Tire strategy decision engine')
 st.text('A prototype decision engine for tire strategy. Uses genetic algorithm as decision engine to produce solutions for tire change and compount selection.')
 
-if "fitness" not in st.session_state:
+if "fitness_tire" not in st.session_state:
     #st.session_state.fitness = np.load('fitness.npy',allow_pickle='TRUE').item()
-    st.session_state.fitness = []
+    st.session_state.fitness_tire = []
     
 if "strategy" not in st.session_state:
     st.session_state.strategy = [0,1,1,9,30]  
@@ -49,9 +49,9 @@ if "stop_strategy" not in st.session_state:
     
     
     
-if "solutions" not in st.session_state:
-    st.session_state.solutions = np.load('solutions.npy',allow_pickle='TRUE').item()
-    #st.session_state.solutions = [] 
+if "solutions_tire" not in st.session_state:
+    st.session_state.solutions_tire = np.load('solutions.npy',allow_pickle='TRUE').item()
+    #st.session_state.solutions_tire = [] 
     
 
 if "tire_dict" not in st.session_state:
@@ -214,7 +214,7 @@ if optimise:
         t_total_race,n_strategy,lap_times_arr,compound_arr,total_degradation = simulate_strategy(solution)
         fitness = 100-t_total_race
         
-        st.session_state.fitness.append(t_total_race)
+        st.session_state.fitness_tire.append(t_total_race)
         time.sleep(0.1)
 
         
@@ -248,7 +248,7 @@ if optimise:
         for sol in range(n_sol):
             
             my_bar.progress(start_run/total_run, text="Finding solutions. Please wait...")
-            st.session_state.fitness = []    
+            st.session_state.fitness_tire = []    
             ga_instance = pygad.GA(num_generations=num_generations,
                                 num_parents_mating=num_parents_mating,
                                 fitness_func=fitness_function,
@@ -266,7 +266,7 @@ if optimise:
             
             st.session_state.strategy = solution
 
-            df = pd.DataFrame({'Iterations':list(range(len(st.session_state.fitness))),'Fitness': st.session_state.fitness})
+            df = pd.DataFrame({'Iterations':list(range(len(st.session_state.fitness_tire))),'Fitness': st.session_state.fitness_tire})
             st.session_state.figure_3_placeholder = px.line(df,x="Iterations",y="Fitness")
             st.session_state.figure_3_placeholder.update_layout(height=300,margin=dict(r=20,b=10,l=10,t=10))
             st.session_state.plotly_3_placeholder.plotly_chart(st.session_state.figure_3_placeholder,use_container_width=True)
@@ -301,16 +301,16 @@ if optimise:
         
         
         
-    st.session_state.solutions = sol_dict  
+    st.session_state.solutions_tire = sol_dict  
     #np.save('solutions.npy', sol_dict) 
-    #np.save('fitness.npy', st.session_state.fitness) 
+    #np.save('fitness.npy', st.session_state.fitness_tire) 
     
     my_bar.empty()
 
 
 
 # Update dashboard
-sol = st.session_state.solutions
+sol = st.session_state.solutions_tire
 if sol:
     df = pd.DataFrame(sol).T
 
@@ -324,7 +324,7 @@ if sol:
     st.session_state.plotly_4_placeholder.plotly_chart(st.session_state.figure_4_placeholder,use_container_width=True)
 
 
-df = pd.DataFrame({'Iterations':list(range(len(st.session_state.fitness))),'Fitness': st.session_state.fitness})
+df = pd.DataFrame({'Iterations':list(range(len(st.session_state.fitness_tire))),'Fitness': st.session_state.fitness_tire})
 st.session_state.figure_3_placeholder = px.line(df,x="Iterations",y="Fitness")
 st.session_state.figure_3_placeholder.update_layout(height=400,margin=dict(r=20,b=10,l=10,t=10))
 st.session_state.plotly_3_placeholder.plotly_chart(st.session_state.figure_3_placeholder,use_container_width=True)
@@ -333,13 +333,13 @@ st.session_state.plotly_3_placeholder.plotly_chart(st.session_state.figure_3_pla
 
 # Update perf comparison
 
-if st.session_state.solutions:
+if st.session_state.solutions_tire:
     
     disp_dict = {}
     fig1 = go.Figure()
     fig2 = go.Figure()
     for sol_index in sol_select:
-        solution = st.session_state.solutions[sol_index]
+        solution = st.session_state.solutions_tire[sol_index]
         strategy = solution['Strategy_arr']
         t_total_race,n_strategy,lap_times_arr,compound_arr,total_degradation = simulate_strategy(strategy)
 

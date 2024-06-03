@@ -67,20 +67,20 @@ if 'total_laps' not in st.session_state:
     st.session_state.total_laps = []
     st.session_state.race_name = []
 
-if 'select' not in st.session_state:
+if 'select_lap' not in st.session_state:
     #st.session_state.select = pd.DataFrame([],columns=['Lap','Lap time','Position','Compound','Training','Testing'])
     df = pd.read_pickle("data/Page4_init.pkl")  
     #df.columns = ["Lap", "Lap time", "Position", "Compound", "Training","Remove"]
-    st.session_state.select = df
+    st.session_state.select_lap = df
     #df.to_pickle("./Page4_init.pkl")
 
 if 'analysis_figure' not in st.session_state:
     st.session_state.analysis_figure = []
 
-if 'model' not in st.session_state:
+if 'model_anomaly' not in st.session_state:
     filename = 'data/Page4_model.sav'
     model = pickle.load(open(filename, 'rb'))
-    st.session_state.model = model    
+    st.session_state.model_anomaly = model    
     
     filename = 'data/Page4_scaler.sav'
     scaler = pickle.load(open(filename, 'rb'))
@@ -126,7 +126,7 @@ def read_image(img_path):
 def load_model():
     filename = 'data/Page4_model.sav'
     model = pickle.load(open(filename, 'rb'))
-    st.session_state.model = model
+    st.session_state.model_anomaly = model
 
     filename = 'data/Page4_scaler.sav'
     scaler = pickle.load(open(filename, 'rb'))
@@ -139,7 +139,7 @@ def load_model():
 # Initialise
 
 # Load anomaly detection model
-st.session_state.model, st.session_state.scaler = load_model()
+st.session_state.model_anomaly, st.session_state.scaler = load_model()
 st.session_state.features = ["Distance","RPM","Speed","Throttle"]
 
 
@@ -400,25 +400,25 @@ metric5_placeholder.metric("Ambient temp", "%.1f" % a_lap + u" \u00b0C")
 
 
 if select_button:
-    row0 = st.session_state.select
+    row0 = st.session_state.select_lap
     
     if not n in row0["Lap"].unique():
 
         row = pd.DataFrame({'Lap':n,'Lap time':t_lap,'Position':p_lap,'Compound':c_lap,'Training':False,'Remove':False}, index=[0])
         
         if isinstance(row0,pd.DataFrame):
-            st.session_state.select = pd.concat([row0, row], ignore_index=True)
+            st.session_state.select_lap = pd.concat([row0, row], ignore_index=True)
         else:
-            st.session_state.select = row
+            st.session_state.select_lap = row
         
 
 if remove_button:
-    dfr = st.session_state.select
-    st.session_state.select = dfr[dfr['Remove'] == False]
+    dfr = st.session_state.select_lap
+    st.session_state.select_lap = dfr[dfr['Remove'] == False]
 
 
 
-df_select = table_placeholder.data_editor(st.session_state.select,use_container_width=True)
+df_select = table_placeholder.data_editor(st.session_state.select_lap,use_container_width=True)
 
 
 def AddAdditionalTelemetryData(df):
@@ -437,7 +437,7 @@ def AddAdditionalTelemetryData(df):
     
 def GetAnomalies(df):
 
-    model = st.session_state.model
+    model = st.session_state.model_anomaly
     scaler = st.session_state.scaler
 
     t_test = df['Time'].values
@@ -536,7 +536,7 @@ if train_button:
 
         #filename = 'model.sav'
         #pickle.dump(model, open(filename, 'wb'))
-        st.session_state.model = model
+        st.session_state.model_anomaly = model
 
         #filename = 'scaler.sav'
         #pickle.dump(scaler, open(filename, 'wb'))
@@ -551,11 +551,11 @@ if train_button:
 
 
 # Diplay estimator specs
-estimator1_placeholder.text(f'1. Detector type: {st.session_state.model.__module__}')
+estimator1_placeholder.text(f'1. Detector type: {st.session_state.model_anomaly.__module__}')
 estimator2_placeholder.text(f'2. Learning mode: Unsupervised learning')        
-estimator3_placeholder.text(f'3. Novelty: ' + str(st.session_state.model.__dict__['novelty']))
-estimator4_placeholder.text(f'4. Number of neighbors: ' + str(st.session_state.model.__dict__['n_neighbors']))
-estimator5_placeholder.text(f'5. Number of samples: ' + str(st.session_state.model.__dict__['n_samples_fit_']))
+estimator3_placeholder.text(f'3. Novelty: ' + str(st.session_state.model_anomaly.__dict__['novelty']))
+estimator4_placeholder.text(f'4. Number of neighbors: ' + str(st.session_state.model_anomaly.__dict__['n_neighbors']))
+estimator5_placeholder.text(f'5. Number of samples: ' + str(st.session_state.model_anomaly.__dict__['n_samples_fit_']))
 estimator6_placeholder.text(f'6. Transformation: {st.session_state.scaler.__class__.__name__}')
 estimator7_placeholder.text(f'7. Features: ' + ", ".join(st.session_state.features))
 

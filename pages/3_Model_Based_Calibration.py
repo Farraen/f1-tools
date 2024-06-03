@@ -74,8 +74,8 @@ if 'testing_figure' not in st.session_state:
 if 'sanity_figure' not in st.session_state:
     st.session_state.sanity_figure = []   
     
-if 'model' not in st.session_state:
-    st.session_state.model = []   
+if 'model_mbc' not in st.session_state:
+    st.session_state.model_mbc = []   
     
 if 'accuracy_figure_1' not in st.session_state:
     st.session_state.accuracy_figure_1 = []   
@@ -489,14 +489,14 @@ if training:
           'task_type': 'CPU', 
           'iterations': 150,
          }
-    model = CatBoostRegressor(**params)
+    model_mbc = CatBoostRegressor(**params)
     
 
     # Fit model
-    model.fit(X_train, y_train)
-    score_train = model.score(X_train, y_train)
-    score_test = model.score(X_test, y_test)
-    st.session_state.model = model
+    model_mbc.fit(X_train, y_train)
+    score_train = model_mbc.score(X_train, y_train)
+    score_test = model_mbc.score(X_test, y_test)
+    st.session_state.model_mbc = model_mbc
     
     
     metric_1.write(f"Training R2: {score_train:.3f}")
@@ -505,7 +505,7 @@ if training:
 
 
     
-    yout = model.predict(X_train)
+    yout = model_mbc.predict(X_train)
     y_pred = pd.DataFrame(yout,columns=outputs) 
     a = y_pred[response]
     b = y_train[response]
@@ -518,7 +518,7 @@ if training:
     st.session_state.accuracy_figure_1 = fig  
     
     
-    yout = model.predict(X_test)
+    yout = model_mbc.predict(X_test)
     y_pred = pd.DataFrame(yout,columns=outputs) 
     a = y_pred[response]
     b = y_test[response]
@@ -535,7 +535,7 @@ if training:
 
 
 if model_save:
-    st.session_state.model.save_model("engine_model")
+    st.session_state.model_mbc.save_model("engine_model")
 
 
    

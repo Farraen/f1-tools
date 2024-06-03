@@ -30,8 +30,8 @@ if 'pu_fitness_trace' not in st.session_state:
 if 'pu_results' not in st.session_state:
     st.session_state.pu_results = []
 
-if 'df' not in st.session_state:
-    st.session_state.df = []
+if 'df_2' not in st.session_state:
+    st.session_state.df_2 = []
 
 if 'bias' not in st.session_state:
     st.session_state.bias = 2
@@ -205,9 +205,9 @@ def check_recommendations(prompt):
 
 def send_message_technical(prompt):
 
-    df = st.session_state.df
-    a = df.columns.values.tolist()
-    b = df.values.tolist()
+    df_2 = st.session_state.df_2
+    a = df_2.columns.values.tolist()
+    b = df_2.values.tolist()
     b.insert(0, a)
     ystr = "["
     for row in b:
@@ -240,14 +240,14 @@ def send_message_technical(prompt):
 def update_table(prompt):
 
 
-    df = st.session_state.df.copy()
-    df = df[['Track', 'PU Failures', 'PU Actual', 'PU Projection']]
-    df['Round'] = df.index +1 
-    df['Race number'] = df.index +1 
+    df_2 = st.session_state.df_2.copy()
+    df_2 = df_2[['Track', 'PU Failures', 'PU Actual', 'PU Projection']]
+    df_2['Round'] = df_2.index +1 
+    df_2['Race number'] = df_2.index +1 
 
 
-    a = df.columns.values.tolist()
-    b = df.values.tolist()
+    a = df_2.columns.values.tolist()
+    b = df_2.values.tolist()
     b.insert(0, a)
     ystr = "["
     for row in b:
@@ -293,7 +293,7 @@ def interp2(X,Y,Z,Xv,Yv):
 
 def DamageModel(x):
 
-    dtt = st.session_state.df
+    dtt = st.session_state.df_2 
 
     ICE_RUL  = [80, 70, 95]
     ICE_KW  = [425, 400, 450]
@@ -528,8 +528,8 @@ def change_bias():
 # --------  For optimisation  -------------
 
 def make_full_solution(solution):
-    if not st.session_state.df["PU Actual"].isna().all():
-        dff = st.session_state.df.copy()
+    if not st.session_state.df_2 ["PU Actual"].isna().all():
+        dff = st.session_state.df_2.copy()
         tracks_left_idx = dff["PU Actual"].isna()
         actual = dff["PU Actual"].to_numpy()        
         solutionFull = dff["PU Projection"].to_numpy()
@@ -557,11 +557,11 @@ def on_generation(ga_instance):
 
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(solution)
 
-    st.session_state.df["PU Projection"] = solution
-    st.session_state.df["PowerLeft"] = PowerLeft["PowerLeft"]
-    st.session_state.df["PowerReduced"] = PowerReduced["PowerReduced"]
-    st.session_state.df["RUL"] = RUL["RUL"]
-    dts = st.session_state.df.copy()
+    st.session_state.df_2 ["PU Projection"] = solution
+    st.session_state.df_2 ["PowerLeft"] = PowerLeft["PowerLeft"]
+    st.session_state.df_2 ["PowerReduced"] = PowerReduced["PowerReduced"]
+    st.session_state.df_2 ["RUL"] = RUL["RUL"]
+    dts = st.session_state.df_2.copy()
 
     index = ga_instance.generations_completed
     st.session_state.pu_results[index] = dts
@@ -588,7 +588,7 @@ def optimisation_sequence():
     fitness_function = fitness_func
 
     # Only optimise track with no actual PU results
-    tracks_left = st.session_state.df["PU Actual"].isna().sum()
+    tracks_left = st.session_state.df_2 ["PU Actual"].isna().sum()
 
     num_parents_mating = 4
     sol_per_pop = 5
@@ -597,7 +597,7 @@ def optimisation_sequence():
 
     # Check PUs left
     pu_available = [1,2,3]
-    PU_failed = st.session_state.df["PU Failures"].dropna().unique().tolist()
+    PU_failed = st.session_state.df_2 ["PU Failures"].dropna().unique().tolist()
     for item in PU_failed:
         if item in pu_available:
             pu_available.remove(item)
@@ -623,7 +623,7 @@ def optimisation_sequence():
     
 def reoptimise():
     
-    df = st.session_state.df.copy()
+    df_2 = st.session_state.df_2.copy()
     mode_requested = []
     flag = False
     for index, updates in st.session_state["mastertable"].items():
@@ -631,18 +631,18 @@ def reoptimise():
             for row, value in updates.items():
                 for colname, cellvalue in value.items():
                     mode_requested.append(colname)
-                    df.loc[row,colname] = cellvalue
+                    df_2.loc[row,colname] = cellvalue
 
                     # Only get update flag for actual manipulation not failure
                     # Flag is for rerunning the decision engine
                     if "PU Actual" in colname:
-                        if df.loc[row,colname] == df.loc[row,"PU Projection"]:
+                        if df_2.loc[row,colname] == df_2.loc[row,"PU Projection"]:
                             flag = False
                         else:
                             flag = True
 
 
-    st.session_state.df = df
+    st.session_state.df_2 = df_2
 
     if "PU Actual" in mode_requested:
         if flag:
@@ -658,41 +658,41 @@ def reoptimise():
 
 #---------- Load in track information -------------
    
-if not isinstance(st.session_state.df,pd.DataFrame):
+if not isinstance(st.session_state.df_2 ,pd.DataFrame):
     
     # Initial condition
-    df = pd.read_excel('data/Page1_track.xlsx')
+    df_2 = pd.read_excel('data/Page1_track.xlsx')
     
-    st.session_state.df = df.copy()
-    df["PU Failures"] = np.nan
-    df["PU Actual"] = np.nan
-    df["PU Projection"] = np.nan
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
-    df["PowerLeft"] = PowerLeft["PowerLeft"]
-    df["PowerReduced"] = PowerReduced["PowerReduced"]
-    df["RUL"] = RUL["RUL"]
+    st.session_state.df_2 = df_2.copy()
+    df_2["PU Failures"] = np.nan
+    df_2["PU Actual"] = np.nan
+    df_2["PU Projection"] = np.nan
+    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df_2["PU Projection"].to_numpy())
+    df_2["PowerLeft"] = PowerLeft["PowerLeft"]
+    df_2["PowerReduced"] = PowerReduced["PowerReduced"]
+    df_2["RUL"] = RUL["RUL"]
 
 
-    df.insert(3, "PU Projection", df.pop("PU Projection"))
-    df.insert(3, "PU Actual", df.pop("PU Actual"))
-    df.insert(3, "PU Failures", df.pop("PU Failures"))
-    df.pop('Date')
-    df.pop('No')
+    df_2.insert(3, "PU Projection", df_2.pop("PU Projection"))
+    df_2.insert(3, "PU Actual", df_2.pop("PU Actual"))
+    df_2.insert(3, "PU Failures", df_2.pop("PU Failures"))
+    df_2.pop('Date')
+    df_2.pop('No')
 
     # Going to be the main table
-    st.session_state.df = df.copy()
+    st.session_state.df_2 = df_2.copy()
 
 else:
 
     # Simulate and repopulate the master table
-    df = st.session_state.df
-    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
-    df["PowerLeft"] = PowerLeft["PowerLeft"]
-    df["PowerReduced"] = PowerReduced["PowerReduced"]
-    df["RUL"] = RUL["RUL"]
+    df_2 = st.session_state.df_2 
+    Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df_2["PU Projection"].to_numpy())
+    df_2["PowerLeft"] = PowerLeft["PowerLeft"]
+    df_2["PowerReduced"] = PowerReduced["PowerReduced"]
+    df_2["RUL"] = RUL["RUL"]
     
     # Going to be the main table
-    st.session_state.df = df
+    st.session_state.df_2 = df_2
 
 # ----------- prompt engine ----------------------
 def send_message(messages):
@@ -749,7 +749,7 @@ with st.expander('PU selection optimisation',expanded=True):
         my_bar = st.progress(0)
 
         # Highligh rows depending on type (actual or projection)
-        df_track_styled = st.session_state.df.copy()
+        df_track_styled = st.session_state.df_2.copy()
 
         actual_row = np.where(~df_track_styled["PU Actual"].isna())[0]
         projection_row = np.where(df_track_styled["PU Actual"].isna())[0]
@@ -768,16 +768,17 @@ with st.expander('PU selection optimisation',expanded=True):
      
         st.selectbox('You might want to try these prompts...',
             ["How to select a power unit for an F1 car?",
-                "How to do PU allocation for each race?",
-                "initialise pu allocation table",
-                "PU number 1 failed at race 20",
+                "WHat is the best way to select power unit for each race? what factors are taken into account?",
+                "Initialise pu allocation table",
+                "PU number 1 has failed at race 20",
                 "PU 1 has failed at race 3, make new recommendations.",
                 "Restrategise",
                 "Actual PU for race 2 is 1",
                 "Actual PU for monaco race is 3",
                 "PU number 3 failed at race 2",
-                "How to optimise a racing line ?",
+                "How to optimise a racing line?",
                 "When is the first f1 race?",
+                "Which F1 tracks are power lap tracks?",
                 "Which track is the hottest?"],index=None,key="select_input",on_change=select_callback)
 
         st.text_input("Enter prompt here:",key=10,on_change=chat_callback)
@@ -909,11 +910,11 @@ if start_button:
 if 'failed pu' in action:
     
     # Update table
-    df = st.session_state.df.copy()
+    df_2 = st.session_state.df_2.copy()
     PU_failed = payload[0]
     Race_affected = payload[1]
-    df.loc[Race_affected[0]-1,'PU Failures'] = PU_failed[0]
-    st.session_state.df = df
+    df_2.loc[Race_affected[0]-1,'PU Failures'] = PU_failed[0]
+    st.session_state.df_2 = df_2
     
     # Rerun optimisation sequence
     optimisation_sequence()
@@ -930,11 +931,11 @@ if 'failed pu' in action:
 
 if 'update table' in action:
     # Update table
-    df = st.session_state.df.copy()
+    df_2 = st.session_state.df_2.copy()
     Actual = payload[0]
     Race_affected = payload[1]
-    df.loc[Race_affected[0]-1,'PU Actual'] = Actual[0]
-    st.session_state.df = df
+    df_2.loc[Race_affected[0]-1,'PU Actual'] = Actual[0]
+    st.session_state.df_2 = df_2
     
     # Rerun optimisation sequence
     optimisation_sequence()
