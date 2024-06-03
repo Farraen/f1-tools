@@ -58,7 +58,7 @@ if 'doe' not in st.session_state:
 if 'test_result' not in st.session_state:
     st.session_state.test_result = []
     
-if 'model' not in st.session_state:
+if 'engine_model' not in st.session_state:
     engine_model = CatBoostRegressor()
     engine_model.load_model("engine_model")
     st.session_state.engine_model = engine_model
