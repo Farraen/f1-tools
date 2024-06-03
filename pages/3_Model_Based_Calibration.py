@@ -187,8 +187,6 @@ with st.expander('Introduction',expanded=False):
         image = read_image("images/mbc.png")
         st.image(image,use_column_width=True)
         
-st.button('Refresh testing')
-        
         
 with st.expander('Step 1: Generate DoE',expanded=True):
 
