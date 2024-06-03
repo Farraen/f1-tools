@@ -160,7 +160,7 @@ model_virtual_enging.load_model("virtual_engine")
 
 st.subheader("Model-based Calibration Methodology")
 
-with st.expander('Introduction',expanded=False):
+with st.expander('Introduction',expanded=True):
 
     col1, col2 = st.columns([1,1],gap='large')
     
