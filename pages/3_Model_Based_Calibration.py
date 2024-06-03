@@ -167,14 +167,18 @@ with st.expander('Introduction',expanded=False):
     with col1:
         longstr = '''
         
-        A dashboard designed to explore the feasibility of predicting early power unit (PU) failures
-        by analyzing a limited number of channels. The default race is the 2022 Australian Grand Prix, 
-        where Max experienced an early PU failure. This dashboard employs basic statistical methods to establish 
-        a monitoring window that alerts the race engineer or driver to potential faults.
-
-        With additional data, more sophisticated monitoring systems incorporating machine learning models 
-        can be developed. Some underlying patterns may be challenging to identify and comprehend.
-            
+            This dashboard is designed to showcase the model-based calibration process, 
+            providing a comprehensive view of its various stages. The process begins with 
+            the creation of an experimental sequence, followed by the development of a 
+            machine learning model, specifically a regression model, and concludes with 
+            the optimization of calibration maps. The dashboard employs a virtual engine 
+            to execute design of experiment test sequences, generating engine testing results 
+            in the process. These results are then utilized to build a predictive model. 
+            Subsequently, this model is employed by the calibration optimizer to determine 
+            the precise parameters that ensure optimal engine performance. By integrating these 
+            elements, the dashboard offers a detailed and interactive representation of the 
+            calibration workflow, highlighting the interplay between experimental data, 
+            machine learning, and optimization techniques in refining engine parameters.
             '''
         st.write(longstr)
         
