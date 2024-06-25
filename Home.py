@@ -28,9 +28,9 @@ with col11:
     image = read_image("images/Image_1.png")
     st.image(image)
     st.subheader('PU Selection Decision Engine')
-    st.write('A decision engine for optimising PU selection for the whole season.\
-                  A decison engine made up of genetic algorithm as optimiser and using an \
-             aritificial damage model to calculate vehicle performance degradation.')
+    st.write('A decision engine designed to optimize Fq power unit (PU) selection for the entire season.\
+            This engine utilizes a genetic algorithm as the optimizer and incorporates an \
+            artificial damage model to assess vehicle performance degradation.')
     
 with col21:
     if st.button('Open tool', use_container_width=True,key=2):
@@ -38,7 +38,9 @@ with col21:
     image = read_image("images/Image_2.png")
     st.image(image)
     st.subheader('PU Decision Engine + AI Race Engineer')
-    st.write('Same PU decision engine dashboard but powered by LLM (Large Language Model). It can also make recommendations based on current PU strategy situation. The LLM persona has been tuned to mimic a junior race engineer.')
+    st.write('The same PU decision engine dashboard is now powered by a Large Language Model (LLM). \
+            It can provide recommendations based on the current PU strategy situation. \
+            The LLM persona is tuned to mimic a junior race engineer.')
 
 with col31:
     
@@ -48,7 +50,8 @@ with col31:
     image = read_image("images/Image_3.png")
     st.image(image)
     st.subheader('Model Based Calibration Methodology')
-    st.write('Model-based Calibration is a process to optimally tune parameters for systems. Involves creation of DoE (Design of Experiments), creating models and optimisation.') 
+    st.write('Model-based Calibration is a process for optimally tuning system parameters.\
+        It involves creating a Design of Experiments (DoE), developing models, and performing optimization.') 
     
 
 st.header(' ')
@@ -63,8 +66,8 @@ with col12:
     st.image(image)
     st.subheader('Model Parameter Tuner')
     st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
-             for sensorless system. It is a simple tool for filling in model parameters to \
-             match as measured data from physical sensor.')
+             for sensorless systems. It is a simple tool for filling in model parameters to \
+             match as measured data from a physical sensor.')
 
 with col22:
     if st.button('Open tool', use_container_width=True,key=5):
@@ -95,7 +98,7 @@ with col13:
     image = read_image("images/Image_7.png")
     st.image(image)
     st.subheader('Tire Strategy')
-    st.write('A decision engine platform for tire change strategy. It can help race engineers to predict optimal lap for tire change and compound selection. Genetic algorithm is used as the decision engine to generate tire change solutions.')
+    st.write('A decision engine platform for tyre change strategy. It can help race engineers predict the optimal lap for tyre change and compound selection. Genetic algorithm is used as the decision engine to generate tyre change solutions.')
     
 with col23:
     if st.button('Open tool', use_container_width=True,key=8):
@@ -114,7 +117,7 @@ with col33:
     st.image(image)
     st.subheader('AI Junior Race Engineer')
     st.write('A tuned LLM (Large Language Model) persona to mimic a junior race engineer. \
-             Useful to ask anything within the racing domain. For future development, it can connect to the MongoDB database to extract and process race telemetery data. Powered by OpenAI language model.')
+             Please feel free to ask anything within the racing domain. The next version of the tool can connect to a MongoDB database to extract and process race telemetery data. Powered by OpenAI language model.')
     
 
     
