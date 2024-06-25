@@ -28,7 +28,7 @@ with col11:
     image = read_image("images/Image_1.png")
     st.image(image)
     st.subheader('PU Selection Decision Engine')
-    st.write('A decision engine designed to optimize Fq power unit (PU) selection for the entire season.\
+    st.write('A decision engine designed to optimize F1 power unit (PU) selection for the entire season.\
             This engine utilizes a genetic algorithm as the optimizer and incorporates an \
             artificial damage model to assess vehicle performance degradation.')
     
