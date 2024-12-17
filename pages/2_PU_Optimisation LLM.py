@@ -768,7 +768,7 @@ with st.expander('PU selection optimisation',expanded=True):
      
         st.selectbox('You might want to try these prompts...',
             ["How to select a power unit for an F1 car?",
-                "WHat is the best way to select power unit for each race? what factors are taken into account?",
+                "What is the best way to select power unit for each race? what factors are taken into account?",
                 "Initialise pu allocation table",
                 "PU number 1 has failed at race 20",
                 "PU 1 has failed at race 3, make new recommendations.",
