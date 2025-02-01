@@ -136,7 +136,7 @@ with col14:
 
 
 with col14:
-    if st.button('Open tool', use_container_width=True,key=10):
+    if st.button('Open tool', use_container_width=True,key=11):
         switch_page("Data Mining")
     image = read_image("images/Image_10.png")
     st.image(image)
