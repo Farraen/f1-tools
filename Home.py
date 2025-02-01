@@ -133,3 +133,12 @@ with col14:
     st.image(image)
     st.subheader('Data Mining (Under development)')
     st.write('A data exploration tool for finding underlying patterns and trends.')
+
+
+with col14:
+    if st.button('Open tool', use_container_width=True,key=10):
+        switch_page("Data Mining")
+    image = read_image("images/Image_10.png")
+    st.image(image)
+    st.subheader('Lap Time Predictor')
+    st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
