@@ -137,8 +137,8 @@ with col14:
 
 with col24:
     if st.button('Open tool', use_container_width=True,key=11):
-        switch_page("Data Mining")
-    image = read_image("images/Image_10.png")
+        switch_page("Lap Time Prediction")
+    image = read_image("images/Image_11.jpg")
     st.image(image)
     st.subheader('Lap Time Predictor')
     st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
