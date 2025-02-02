@@ -35,6 +35,14 @@ def st_text(text):
     st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
 
 
+# ----------- Functions --------------------------
+    
+# For loading images
+@st.cache_resource
+def read_image(img_path):
+    im = Image.open(img_path)
+    image = np.array(im)
+    return image
 
 # ----------- UI Section -------------------------
 
@@ -75,7 +83,15 @@ cols = ["Weight_kg","HP","Height_mm","Drag_coefficient","Frontal area_m2","Corne
 resp = ["Time_s"]
 
 with st.expander('Introduction',expanded=True):
-    st.write('A simple dahsboard that can predict a lap time using vehicle parameters as inputs and a machine learning model trained using a racing car database.')
+
+    col1, col2 = st.columns([0.5,1],gap="Medium")
+
+    with col1:
+        st.write('A simple dahsboard that can predict a lap time using vehicle parameters as inputs and a machine learning model trained using a racing car database. The prediction quality at the moment is not good as I have only train the model using about 200 vehicles with various configurations. Also, the model used is only a decision tree type model. I will improve the model later this year.')
+
+    with col2:
+        image = read_image("images/lap_time.png")
+        st.image(image)
 
 with st.expander('Model accuracy',expanded=False):
     col1, col2 = st.columns([1,1],gap="Medium")
@@ -92,10 +108,10 @@ with st.expander('Model accuracy',expanded=False):
     explained_variance = explained_variance_score(results["Actual"], results["Predicted"])
     rmse = math.sqrt(mse)
 
-    st.write(f"Mean Squared Error (MSE): {mse:.4f}")
-    st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
-    st.write(f"R-squared (R^2): {r2:.4f}")
-    st.write(f"Explained Variance Score: {explained_variance:.4f}")
+    st.write(f"Validation Mean Squared Error (MSE): {mse:.4f}")
+    st.write(f"Validation Root Mean Squared Error (RMSE): {rmse:.4f}")
+    st.write(f"Validation R-squared (R^2): {r2:.4f}")
+    st.write(f"Validation Explained Variance Score: {explained_variance:.4f}")
 
 
 
@@ -106,26 +122,28 @@ with st.expander('Lap time prediction',expanded=True):
     col1, col2 = st.columns([1,1],gap="Medium")
     with col1:
         st.write('Predictors')
+        track = st.selectbox("Select race track",tracks)
+
         weight = st.slider('Weight', 500.0,2300.0,1000.0)
         hp = st.slider('Horsepower', 150.0,1100.0,400.0)
         height = st.slider('Vehicle height (Will replace with CG)', 1000.0,1800.0,1100.0)
         Cd = st.slider('Drag coefficient', 0.25,0.4,0.3)
         Af = st.slider('Frontal area', 1.05,2.5,1.3)
 
-        track = st.selectbox("Select race track",tracks)
 
 
     with col2:
-        st.write('Response')
+        st.write('Track information')
         Corners   = df.loc[df['Track']==track,'Corners'].iloc[0]
         Straights = df.loc[df['Track']==track,'Straights'].iloc[0]
         Distance  = df.loc[df['Track']==track,'Distance'].iloc[0]
 
-        col11,col22,col33 = st.columns([1,1,1])
+        col11,col22 = st.columns([1,1])
         col11.metric('Number of corners',Corners)
         col22.metric('Number of straights',Straights)
-        col33.metric('Lap distance',Distance)
+        col11.metric('Lap distance',Distance)
         
+        st.write('Lap time prediction')
         xhat = [weight,hp,height,Cd,Af,Corners,Straights,Distance]
         lap_time = model.predict(xhat)
         #lap_time_str = format_seconds(lap_time)
