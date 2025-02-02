@@ -84,14 +84,10 @@ resp = ["Time_s"]
 
 with st.expander('Introduction',expanded=True):
 
-    col1, col2 = st.columns([0.5,1],gap="Medium")
+    st.write('A simple dahsboard that can predict a lap time using vehicle parameters as inputs and a machine learning model trained using a racing car database. The prediction quality at the moment is not good as I have only train the model using about 200 vehicles with various configurations. Also, the model used is only a decision tree type model. I will improve the model later this year.')
 
-    with col1:
-        st.write('A simple dahsboard that can predict a lap time using vehicle parameters as inputs and a machine learning model trained using a racing car database. The prediction quality at the moment is not good as I have only train the model using about 200 vehicles with various configurations. Also, the model used is only a decision tree type model. I will improve the model later this year.')
-
-    with col2:
-        image = read_image("images/lap_time.png")
-        st.image(image)
+    image = read_image("images/lap_time.png")
+    st.image(image)
 
 with st.expander('Model accuracy',expanded=False):
     col1, col2 = st.columns([1,1],gap="Medium")
