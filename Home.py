@@ -44,15 +44,14 @@ with col21:
 
 with col31:
     
+
     
     if st.button('Open tool', use_container_width=True,key=3):
-        switch_page("Model Based Calibration")
-    image = read_image("images/Image_3.png")
+        switch_page("Lap Time Prediction")
+    image = read_image("images/Image_11.jpg")
     st.image(image)
-    st.subheader('Model Based Calibration Methodology')
-    st.write('(Under development) Model-based Calibration is a process for optimally tuning system parameters.\
-        It involves creating a Design of Experiments (DoE), developing models, and performing optimization.') 
-    
+    st.subheader('Lap Time Predictor')
+    st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
 
 st.header(' ')
 st.header(' ')
@@ -136,9 +135,13 @@ with col14:
 
 
 with col24:
+
+    
     if st.button('Open tool', use_container_width=True,key=11):
-        switch_page("Lap Time Prediction")
-    image = read_image("images/Image_11.jpg")
+        switch_page("Model Based Calibration")
+    image = read_image("images/Image_3.png")
     st.image(image)
-    st.subheader('Lap Time Predictor')
-    st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
+    st.subheader('Model Based Calibration Methodology')
+    st.write('(Under development) Model-based Calibration is a process for optimally tuning system parameters.\
+        It involves creating a Design of Experiments (DoE), developing models, and performing optimization.') 
+    
