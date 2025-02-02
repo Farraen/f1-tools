@@ -46,7 +46,7 @@ with col31:
     
     
     if st.button('Open tool', use_container_width=True,key=3):
-        switch_page("Model-Based Calibration")
+        switch_page("Model Based Calibration")
     image = read_image("images/Image_3.png")
     st.image(image)
     st.subheader('Model Based Calibration Methodology')
