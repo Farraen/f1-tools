@@ -44,14 +44,12 @@ with col21:
 
 with col31:
     
-
-    
     if st.button('Open tool', use_container_width=True,key=3):
-        switch_page("Lap Time Prediction")
-    image = read_image("images/Image_11.jpg")
+        switch_page("EV Race Car Optimiser")
+    image = read_image("images/Image_12.png")
     st.image(image)
-    st.subheader('Lap Time Predictor')
-    st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
+    st.subheader('EV Race Car Optimiser')
+    st.write('A tool optimising EV race car parameters to get most efficient lap times.')
 
 st.header(' ')
 st.header(' ')
@@ -60,6 +58,14 @@ gap,col12,gap,col22,gap,col32,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 
 with col12:
     if st.button('Open tool', use_container_width=True,key=4):
+        switch_page("Lap Time Prediction")
+    image = read_image("images/Image_11.jpg")
+    st.image(image)
+    st.subheader('Lap Time Predictor')
+    st.write('A tool for predicting vehicle lap time over a circuit using machine learning.')
+
+with col22:
+    if st.button('Open tool', use_container_width=True,key=5):
         switch_page("Combustion Strategy")
     image = read_image("images/Image_4.png")
     st.image(image)
@@ -67,15 +73,6 @@ with col12:
     st.write('A tool for parameterising models (such as combustion or exhaust temperature model) \
              for sensorless systems. It is a simple tool for filling in model parameters to \
              match as measured data from a physical sensor.')
-
-with col22:
-    if st.button('Open tool', use_container_width=True,key=5):
-        switch_page("Anomaly Estimation")
-    image = read_image("images/Image_5.png")
-    st.image(image)
-    st.subheader('Anomaly Detection Testing Tool')
-    st.write('A tool for training a ML classifier for detecting anomalies in \
-             vehicle measurement data.')
     
 with col32:
     if st.button('Open tool', use_container_width=True,key=6):
@@ -144,4 +141,15 @@ with col24:
     st.subheader('Model Based Calibration Methodology')
     st.write('(Under development) Model-based Calibration is a process for optimally tuning system parameters.\
         It involves creating a Design of Experiments (DoE), developing models, and performing optimization.') 
+    
+
+with col34:
+
+    if st.button('Open tool', use_container_width=True,key=12):
+        switch_page("Anomaly Estimation")
+    image = read_image("images/Image_5.png")
+    st.image(image)
+    st.subheader('Anomaly Detection Testing Tool')
+    st.write('A tool for training a ML classifier for detecting anomalies in \
+             vehicle measurement data.')
     
