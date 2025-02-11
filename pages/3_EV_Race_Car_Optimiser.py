@@ -175,6 +175,7 @@ def simulate_vehicle(
             torque = 0.1 * (available_power * motor_efficiency) / motor_speed_radps
         else:
             torque = 0
+        torque = saturation(torque, torque_lower_limit, torque_upper_limit)
 
         # Simplified efficiency calculation
         efficiency = motor_efficiency if pedal_position == 'accelerate' else eta_regen if pedal_position == 'brake' else 0
@@ -302,6 +303,8 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
     list2.extend([0] * (max_length - len(list2)))
     time_lap = list1
     lap_delta = [a - b for a, b in zip(list1, list2)]
+    min_length = min(result_optimised['distance'].shape[0],result_competitor['distance'].shape[0])
+    lap_delta = lap_delta[0:min_length]
 
     # Plot
     fig1 = go.Figure()
