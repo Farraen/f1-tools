@@ -8,8 +8,8 @@ import plotly.express as px
 import math
 import plotly.graph_objects as go
 from scipy.interpolate import interp1d
-import pyswarms as ps
-
+from pyswarms.single import GlobalBestPSO
+from pyswarms.utils.functions import single_obj as fx
 
 # --------  For page layout  ---------------
 st.set_page_config(layout="wide")
@@ -501,11 +501,31 @@ with st.expander('Sanity check', expanded=True):
         st.plotly_chart(fig4, use_container_width=True)
         st.plotly_chart(fig5, use_container_width=True)
 
+# Define the objective function
+def sphere_function(x):
+    return np.sum(x ** 2, axis=1)
+
 
 with st.expander('Vehicle parameter optimiser', expanded=True):
 
     start = st.button('Optimise')
 
+    if start:
+        # Set the bounds of the search space
+        lower_bound = np.array([-5] * 2)  # 2-dimensional problem
+        upper_bound = np.array([5] * 2)
+        bounds = (lower_bound, upper_bound)
+
+        # Configure the optimizer
+        options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9}
+        optimizer = GlobalBestPSO(n_particles=30, dimensions=2, options=options, bounds=bounds)
+
+        # Perform optimization
+        best_cost, best_position = optimizer.optimize(sphere_function, iters=100)
+
+        # Print the results
+        st.write(f"Best cost: {best_cost}")
+        st.write(f"Best position: {best_position}")
     
 
 
