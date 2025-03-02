@@ -7,7 +7,8 @@ import time
 import plotly.express as px
 import math
 import plotly.graph_objects as go
-
+from scipy.interpolate import interp1d
+import pyswarms as ps
 
 
 # --------  For page layout  ---------------
@@ -37,6 +38,29 @@ def rpm_to_rad_per_sec(rpm):
 def deg_to_rad(deg):
     return (math.pi/180) * deg
 
+# ---------------- Initialisation ------------------
+
+if 'x_rotor_v_angle_deg' not in st.session_state:
+    st.session_state['x_rotor_v_angle_deg'] = np.array([90.,  100., 110., 120., 140., 150., 170., 180.])
+
+if 'y_motor_torque_loss_v_angle' not in st.session_state:
+    st.session_state['y_motor_torque_loss_v_angle'] =  (600-np.array([403., 410., 412., 411., 404., 394., 350., 325.])) /2
+
+if 'y_mech_stress_mpa' not in st.session_state:
+    st.session_state['y_mech_stress_mpa'] =  np.array([445., 440., 443., 440., 405., 375., 300., 245.])
+
+if 'x_motor_dia_mm' not in st.session_state:
+    st.session_state['x_motor_dia_mm'] =  np.array([160.,180.,200.,220.,240])
+
+if 'y_motor_torque_loss_dia' not in st.session_state:
+    st.session_state['y_motor_torque_loss_dia'] =  np.array([190.,170.,150.,130.,110.])
+
+if 'y_mises_stress_mpa' not in st.session_state:
+    st.session_state['y_mises_stress_mpa'] =  np.array([350.,374.,400.,425.,450.])
+
+if 'Tmax' not in st.session_state:
+    st.session_state['Tmax'] =  600.
+
 
 # Define time array
 distance = np.linspace(0, 300.0, 300+1)
@@ -56,8 +80,36 @@ df_input = pd.DataFrame({
 })
 track_length = 300.0
 
+
+# Functions
+
+def filter_soh(x,y):
+
+    filtered_x = [value for value in x if value > 0.5]
+    filtered_y = [y[i] for i in range(len(x)) if x[i] > 0.5]
+
+    return filtered_x, filtered_y
+
+def calculate_time_delta(result_optimised,result_competitor):
+
+    y_new = np.interp(result_optimised['distance'], result_competitor['distance'], result_competitor['time'])
+    list1 = list(y_new.copy())
+    list2 = list(result_competitor['time'].values)
+    max_length = max(len(list1),len(list2))
+    list1.extend([0] * (max_length - len(list1)))
+    list2.extend([0] * (max_length - len(list2)))
+    time_lap = list1
+    lap_delta = [a - b for a, b in zip(list1, list2)]
+    min_length = min(result_optimised['distance'].shape[0],result_competitor['distance'].shape[0])
+    lap_delta = lap_delta[0:min_length]
+
+    return list2[:-10], lap_delta[:-10]
+
+
 def simulate_vehicle(
-        motor_power_watt,
+        rotor_v_angle_deg,
+        rotor_dia_mm,
+        motor_max_rpm_knee,
         motor_efficiency,
         vehicle_weight,
         drag_coeff,
@@ -69,6 +121,27 @@ def simulate_vehicle(
         drivetrain_efficiency,
         reduction_ratio):
     
+
+    x_rotor_v_angle_deg = st.session_state['x_rotor_v_angle_deg']
+    y_motor_torque_loss_v_angle = st.session_state['y_motor_torque_loss_v_angle']
+    y_mech_stress_mpa = st.session_state['y_mech_stress_mpa']
+
+    x_motor_dia_mm = st.session_state['x_motor_dia_mm']
+    y_motor_torque_loss_dia = st.session_state['y_motor_torque_loss_dia']
+    y_mises_stress_mpa = st.session_state['y_mises_stress_mpa']
+
+    Tmax = st.session_state['Tmax'] 
+
+
+    f = interp1d(np.array(x_rotor_v_angle_deg),np.array(y_motor_torque_loss_v_angle),kind='cubic')
+    torque_loss_1 = f([rotor_v_angle_deg])
+
+    f = interp1d(np.array(x_motor_dia_mm),np.array(y_motor_torque_loss_dia),kind='cubic')
+    torque_loss_2 = f([rotor_dia_mm])
+
+    motor_torque_nm = Tmax - torque_loss_1[0] - torque_loss_2[0]
+    motor_power_watt = float(1000. * motor_torque_nm * motor_max_rpm_knee / 9549.)
+
 
     # Motor limits
     torque_upper_limit = 260.0
@@ -196,7 +269,7 @@ def simulate_vehicle(
                 'torque':torque_list,
                 'efficiency':efficiency_list,
                 'distance':distance_list})
-
+    
     # Generate efficiency map data
     speed_range = np.linspace(0,140, 100)
     torque_range = np.linspace(0,500, 100)
@@ -210,10 +283,29 @@ def simulate_vehicle(
             else:
                 efficiency_map[i, j] = None
 
-    return df_result, efficiency_map,speed_range ,torque_range
+    lap_time = df_result['time'].values[-1]
 
-# Competitor
-motor_power_watt = 150 * 1000
+
+    # Calculate degradation
+    mileage = list(np.arange(0,100000,1000))
+    max_mileage = mileage[-1]
+    failure_point = mileage[-1]
+    failure_point = mileage[-1]
+
+    dmin = np.min(st.session_state['x_motor_dia_mm'])
+    dmax = np.max(st.session_state['x_motor_dia_mm'])
+
+    ageing_acceleration_factor = 1+(3-1)*(rotor_dia_mm-dmin)/(dmax-dmin)
+    y = 1-ageing_acceleration_factor*np.square(mileage/(max_mileage))
+    y_age,x_age = filter_soh(y,mileage)
+
+    return df_result, efficiency_map,speed_range ,torque_range, motor_power_watt, motor_torque_nm, lap_time, x_age, y_age
+
+
+# Competitor and baseline
+rotor_v_angle_deg = 110.
+rotor_dia_mm = 180.
+motor_max_rpm_knee = 4930
 motor_efficiency = 0.9
 vehicle_weight_kg = 1200
 drag_coeff = 0.3
@@ -225,26 +317,28 @@ rolling_coeff = 0.015
 drivetrain_efficiency = 0.81
 reduction_ratio = 7.8
 
-result_competitor, efficiency_map_competitor,speed_range ,torque_range = simulate_vehicle(
-                                                            motor_power_watt,
-                                                            motor_efficiency,
-                                                            vehicle_weight_kg,
-                                                            drag_coeff,
-                                                            frontal_area,
-                                                            battery_capacity_joules,
-                                                            eta_regen,
-                                                            wheel_radius_m,
-                                                            rolling_coeff,
-                                                            drivetrain_efficiency,
-                                                            reduction_ratio,
-                                                            )
+result_competitor, efficiency_map_competitor,speed_range ,torque_range, max_motor_power_watt_competitor, max_motor_torque_nm_competitor,lap_time_competitor, x_ageing_competitor, y_ageing_competitor = simulate_vehicle(
+                                                    rotor_v_angle_deg,
+                                                    rotor_dia_mm,
+                                                    motor_max_rpm_knee,
+                                                    motor_efficiency,
+                                                    vehicle_weight_kg,
+                                                    drag_coeff,
+                                                    frontal_area,
+                                                    battery_capacity_joules,
+                                                    eta_regen,
+                                                    wheel_radius_m,
+                                                    rolling_coeff,
+                                                    drivetrain_efficiency,
+                                                    reduction_ratio,
+                                                    )
 
 
 with st.expander('Introduction', expanded=True):
     col1, col2 = st.columns([1,1])
     col1.write('A simple EV race car simulator with regenerative braking. At the moment, the throttle and brake pedal is fixed for simplicity. Future upgrade will include actual lap data from F1 or similar.')
 
-    col1.write('Future plan:')
+    col1.write('Future plans:')
     col1.markdown(
         """
         - Simple open-source battery model
@@ -260,15 +354,53 @@ with st.expander('Introduction', expanded=True):
     image = read_image("images/ev.png")
     col2.image(image)
 
+with st.expander('Motor data and assumptions', expanded=True):
 
-with st.expander('Vehicle parameter optimiser', expanded=True):
+    col1, col2 = st.columns([1,1])
+    st.session_state['Tmax'] = col1.number_input('Maximum torque',400,700,600)
+    motor_max_rpm_knee = col2.number_input('Speed at max torque (knee point)',4000,6000,4930)
+
+    x_rotor_v_angle_deg = st.session_state['x_rotor_v_angle_deg']
+    y_motor_torque_loss_v_angle = st.session_state['y_motor_torque_loss_v_angle']
+    y_mech_stress_mpa = st.session_state['y_mech_stress_mpa']
+    x_motor_dia_mm = st.session_state['x_motor_dia_mm']
+    y_motor_torque_loss_dia = st.session_state['y_motor_torque_loss_dia']
+    y_mises_stress_mpa = st.session_state['y_mises_stress_mpa']
+
+    col1,col2 = st.columns([1,1])
+    fig4_motor = go.Figure()
+    fig4_motor.add_trace(go.Scatter(x=x_rotor_v_angle_deg, y=y_motor_torque_loss_v_angle, mode='lines+markers'))
+    fig4_motor.update_layout(title='Motor Torque', xaxis_title='Rotor V-angle (deg)', yaxis=dict(title='Torque loss (Nm)'),template='plotly_dark')
+    col1.plotly_chart(fig4_motor, use_container_width=True)
+
+    fig5_motor = go.Figure()
+    fig5_motor.add_trace(go.Scatter(x=x_rotor_v_angle_deg, y=y_mech_stress_mpa, mode='lines+markers'))
+    fig5_motor.update_layout(title='Motor Mechanical Stress', xaxis_title='Rotor V-angle (deg)', yaxis=dict(title='Mechanical Stress (MPa)'),template='plotly_dark')
+    col2.plotly_chart(fig5_motor, use_container_width=True)
+
+
+    col1,col2 = st.columns([1,1])
+    fig6_motor = go.Figure()
+    fig6_motor.add_trace(go.Scatter(x=x_motor_dia_mm, y=y_motor_torque_loss_dia, mode='lines+markers'))
+    fig6_motor.update_layout(title='Torque loss for rotor diameter', xaxis_title='Rotor diameter (mm)', yaxis=dict(title='Torque loss (Nm)'),template='plotly_dark')
+    col1.plotly_chart(fig6_motor, use_container_width=True)
+
+    fig7_motor = go.Figure()
+    fig7_motor.add_trace(go.Scatter(x=x_motor_dia_mm, y=y_mises_stress_mpa, mode='lines+markers'))
+    fig7_motor.update_layout(title='Mises stress distribution for rotor diameter', xaxis_title='Rotor diameter (mm)', yaxis=dict(title='Mises stress (MPa)'),template='plotly_dark')
+    col2.plotly_chart(fig7_motor, use_container_width=True)
+
+
+with st.expander('Sanity check', expanded=True):
     col1, col2 = st.columns([1,1],gap='small')
 
     # Our car
     with col1:
         st.subheader('Our vehicle parameters')
 
-        motor_power_watt = st.slider("Motor power (kW)",100.0,300.0,150.0) * 1000
+        # Sliders
+        rotor_v_angle_deg = st.slider("Rotor V-angle (deg)",90.0,180.0,110.0)
+        rotor_dia_mm = st.slider("Rotor diameter (mm)",170.0,230.0,200.0)
         motor_efficiency = st.slider("Motor efficiency", 0.5, 1.0, 0.9)
         vehicle_weight_kg = st.slider("Vehicle weight (kg)", 700.0, 2000.0, 1100.0)
         drag_coeff = st.slider("Drag coefficient", 0.1, 1.0, 0.3)
@@ -280,31 +412,24 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         drivetrain_efficiency = st.slider("Drivetrain efficiency", 0.1, 1.0, 0.81)
         reduction_ratio = st.slider("Torque reduction ratio in gearbox", 0.0, 10.0, 7.8)
 
-    result_optimised, efficiency_map_optimised,speed_range ,torque_range = simulate_vehicle(
-                                                        motor_power_watt,
-                                                        motor_efficiency,
-                                                        vehicle_weight_kg,
-                                                        drag_coeff,
-                                                        frontal_area,
-                                                        battery_capacity_joules,
-                                                        eta_regen,
-                                                        wheel_radius_m,
-                                                        rolling_coeff,
-                                                        drivetrain_efficiency,
-                                                        reduction_ratio,
-                                                        )
+    result_optimised, efficiency_map_optimised,speed_range ,torque_range, max_motor_power_watt, max_motor_torque_nm, lap_time, x_ageing, y_ageing = simulate_vehicle(
+                                            rotor_v_angle_deg,
+                                            rotor_dia_mm,
+                                            motor_max_rpm_knee,
+                                            motor_efficiency,
+                                            vehicle_weight_kg,
+                                            drag_coeff,
+                                            frontal_area,
+                                            battery_capacity_joules,
+                                            eta_regen,
+                                            wheel_radius_m,
+                                            rolling_coeff,
+                                            drivetrain_efficiency,
+                                            reduction_ratio,
+                                            )
     
     # Calculate time delta
-    y_new = np.interp(result_optimised['distance'], result_competitor['distance'], result_competitor['time'])
-    list1 = list(y_new.copy())
-    list2 = list(result_competitor['time'].values)
-    max_length = max(len(list1),len(list2))
-    list1.extend([0] * (max_length - len(list1)))
-    list2.extend([0] * (max_length - len(list2)))
-    time_lap = list1
-    lap_delta = [a - b for a, b in zip(list1, list2)]
-    min_length = min(result_optimised['distance'].shape[0],result_competitor['distance'].shape[0])
-    lap_delta = lap_delta[0:min_length]
+    x_lap_delta, y_lap_delta = calculate_time_delta(result_optimised,result_competitor)
 
     # Plot
     fig1 = go.Figure()
@@ -325,7 +450,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
     fig4 = go.Figure()
     fig4.add_trace(go.Scatter(x=result_competitor['time'], y=result_competitor['distance'], mode='lines', name='Competitor'))
     fig4.add_trace(go.Scatter(x=result_optimised['time'], y=result_optimised['distance'], mode='lines', name='Our'))
-    fig4.add_trace(go.Scatter(x=list2[:-10], y=lap_delta[:-10], mode='lines', yaxis='y2', name='Lap delta',showlegend=True))
+    fig4.add_trace(go.Scatter(x=x_lap_delta, y=y_lap_delta, mode='lines', yaxis='y2', name='Lap delta',showlegend=True))
     fig4.update_layout(title='Lap Distance (m)', xaxis_title='Time (s)', yaxis=dict(title='Distance (m)'), yaxis2=dict(title='Time delta (s)', overlaying='y',side='right'),template='plotly_dark')
 
     fig5 = go.Figure()
@@ -340,12 +465,36 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
     fig5.update_layout(title='Motor Efficiency Map with Operating Points', xaxis_title='Speed (km/h)', yaxis=dict(title='Torque (N)'),template='plotly_dark')
 
+    fig6 = go.Figure()
+    fig6.add_trace(go.Scatter(x=x_ageing_competitor, y=y_ageing_competitor, mode='lines',name='Competitor'))
+    fig6.add_trace(go.Scatter(x=x_ageing, y=y_ageing, mode='lines',name='Ours'))
+    fig6.update_yaxes(range=[0, 1])
+    fig6.update_layout(title='Remaining Useful Life', xaxis_title='Mileage (miles)', yaxis=dict(title='State of Health (SoH)'),template='plotly_dark')
+
+    st.plotly_chart(fig6, use_container_width=True)
+
 
 
 
 
     with col2:
+        st.subheader('Vehicle performance metrics')
+        
+        Pmotor = np.round(max_motor_power_watt/1000,1)
+        dPmotor = np.round((max_motor_power_watt-max_motor_power_watt_competitor)/1000,1)
+        Tmotor = np.round(max_motor_torque_nm,1)
+        dTmotor = np.round((max_motor_torque_nm-max_motor_torque_nm_competitor),1)
+
+        col11, col22 = st.columns([1,1])
+        col11.metric('Maximum motor power',f"{Pmotor} kW", dPmotor)
+        col22.metric('Maximum motor torque',f"{Tmotor} Nm", dTmotor)
+
+        col11, col22 = st.columns([1,1])
+        col11.metric('Lap time',f"{lap_time} s")
+        col22.metric('Lap time (competitor)',f"{lap_time_competitor} s")
+
         st.subheader('Vehicle performance plots')
+
         st.plotly_chart(fig1, use_container_width=True)
         st.plotly_chart(fig2, use_container_width=True)
         st.plotly_chart(fig3, use_container_width=True)
@@ -353,8 +502,11 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         st.plotly_chart(fig5, use_container_width=True)
 
 
+with st.expander('Vehicle parameter optimiser', expanded=True):
 
+    start = st.button('Optimise')
 
+    
 
 
 
