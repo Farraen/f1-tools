@@ -336,7 +336,7 @@ result_competitor, efficiency_map_competitor,speed_range ,torque_range, max_moto
 
 with st.expander('Introduction', expanded=True):
     col1, col2 = st.columns([1,1])
-    col1.write('A simple EV race car simulator with regenerative braking. At the moment, the throttle and brake pedal is fixed for simplicity. Future upgrade will include actual lap data from F1 or similar.')
+    col1.write('A simple EV race car simulator with regenerative braking. At the moment, the throttle and brake pedal is fixed for simplicity. Future upgrades will include actual lap data from F1 or similar.')
 
     col1.write('Future plans:')
     col1.markdown(
