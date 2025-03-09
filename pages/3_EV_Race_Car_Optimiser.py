@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from scipy.interpolate import interp1d
 import pygad
 from datetime import datetime 
+import seaborn as sns
 
 
 start_time = datetime.now() 
@@ -75,14 +76,24 @@ if 'Tmax' not in st.session_state:
 if "fitness_gen" not in st.session_state:
     st.session_state.fitness_gen = []
 
+if "pareto_plot_placeholder" not in st.session_state:
+    st.session_state.pareto_plot_placeholder = None
+
 if "pareto_fig" not in st.session_state:
     st.session_state.pareto_fig = None
+
+if "fitness_fig" not in st.session_state:
+    st.session_state.fitness_fig = None
 
 if "results" not in st.session_state:
     st.session_state.results = []
 
 if "results_on_gen" not in st.session_state:
     st.session_state.results_on_gen = []
+
+if "Tmax" not in st.session_state:
+    st.session_state['Tmax'] = []
+
 
 df = load_range('data/Page3_range.csv')
 st.session_state.solution_baseline = df.iloc[0,:].to_dict()
@@ -118,32 +129,26 @@ track_length = 300.0
 
 def plot_fitness():
 
-    if not st.session_state.fitness_gen:
+    x = list(range(0,len(st.session_state.fitness_gen)))
 
-        fig = px.scatter(x=[0], y=[0])
-        fig.update_layout(
-            yaxis_title='Cost Value',
-            xaxis_title='Iteration',
-            yaxis_range=[0.95,1],
-            xaxis_range=[0,10],
-            showlegend=True)        
-    else:
-        x = list(range(0,len(st.session_state.fitness_gen)))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=st.session_state.fitness_gen,
+        mode='lines',
+        line = dict(width = 4, color = "lightblue"),
+        marker = dict(color = "cyan", size = 15, opacity = 0.8),
+    ))
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=x,
-            y=st.session_state.fitness_gen,
-            mode='lines',
-            line = dict(width = 4, color = "lightblue"),
-            marker = dict(color = "cyan", size = 15, opacity = 0.8),
-        ))
-        fig.update_layout(
-        yaxis_title='Cost Value',
-        xaxis_title='Iteration')     
-
-    fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
-    optim_plot_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True,height=250)  
+    fig.update_layout(
+        yaxis_title='Fitness',
+        xaxis_title='Iteration',
+        yaxis_range=[0.95,1],
+        xaxis_range=[0,10],
+        showlegend=False,
+        height=250,
+        margin=dict(l=20, r=20, t=20, b=20))
+    return fig
 
 
 def plot_pareto():
@@ -532,9 +537,8 @@ def rescale_solution_2d(solution):
 def on_generation(ga_instance):
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
-
     st.session_state.fitness_gen.append(solution_fitness)
-    plot_fitness()
+
 
 def simulate_pipeline(solution):
     rotor_dia_mm = solution['rotorDiameter']
@@ -580,31 +584,64 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
         my_bar = st.empty()
 
-        optim_plot_placeholder = st.empty()
 
 
     with col2:
-        if st.button('Load file'):
-            st.session_state.results = pd.read_pickle('ev_pareto_final.pkl')
-            st.session_state.results_on_gen = pd.read_pickle('ev_pareto_on_gen.pkl')
-            st.session_state.pareto_fig = plot_pareto()
+
+        if st.session_state.fitness_fig == None:
+            fig = go.Figure()
+            fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
+            fig.update_layout(
+                xaxis_title='Iteration',
+                yaxis=dict(title='Fitness'),
+                template='plotly_dark')
+            st.session_state.fitness_fig = fig
+        fitness_plot_placeholder = st.plotly_chart(st.session_state.fitness_fig, use_container_width=True)
 
 
-        st.write('Pareto plot of the optimisation results')
-        pareto_plot_placeholder = st.empty()
+
     
+    st.divider()
+
+
+
+    if st.button('Load file'):
+        st.session_state.results = pd.read_pickle('ev_pareto_final.pkl')
+        st.session_state.results_on_gen = pd.read_pickle('ev_pareto_on_gen.pkl')
+        st.session_state.pareto_fig = plot_pareto()
+
+
+    st.write('Pareto plot of the optimisation results')
+    # Pareto plot: reload fig if it exist or plot an empty figure
+    if st.session_state.pareto_plot_placeholder == None:
+        st.session_state.pareto_plot_placeholder = st.empty()
+        fig = go.Figure()
+        fig.update_layout(height=450,margin=dict(l=20, r=20, t=20, b=20))
+        fig.update_layout(
+            xaxis_title='Vehicle Performance (Torque)',
+            yaxis=dict(title='Motor Durability (Miles)'),
+            template='plotly_dark')
+        st.session_state.pareto_plot_placeholder.plotly_chart(fig, use_container_width=True)
+
+
+    print(st.session_state.pareto_plot_placeholder)
+
 
     if start:
+
+        if st.session_state.pareto_fig is not None:
+            st.session_state.pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True)
+
 
         progress_text = "Operation in progress. Please wait."
         st.session_state.results_on_gen = []
         result = {}
         for index, bias in enumerate(range_list):
             
+
             time.sleep(0.01)
             my_bar.progress((index+1)/len(range_list), text=progress_text)
             st.session_state.fitness_gen = []
-            plot_fitness()
 
             num_parents_mating = 2  # Increase parents mating
             sol_per_pop = 10  # Increase population size
@@ -637,6 +674,12 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
             r1.update(solution)
             result[index] = r1
 
+
+            #st.session_state.fitness_fig = plot_fitness()
+            #fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig, use_container_width=True)
+            time.sleep(1)
+
+
         time.sleep(1)
         my_bar.empty()    
 
@@ -646,18 +689,12 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         st.session_state.pareto_fig = plot_pareto()
 
 
-    # Fitness plot
-    plot_fitness()
+# Pareto plot: reload fig if it exist or plot an empty figure
+if st.session_state.pareto_plot_placeholder is not None:  
+    if st.session_state.pareto_fig is not None:  
+        events = st.session_state.pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True, on_select="rerun")
 
-    # Pareto plot: reload fig if it exist or plot an empty figure
-    if st.session_state.pareto_fig == None:
-        fig = go.Figure()
-        fig.update_layout(title='Pareto plot of the optimisation results', xaxis_title='Vehicle Performance (Lap time)', yaxis=dict(title='Motor Durability (State of Health)'),template='plotly_dark')
-        pareto_plot_placeholder.plotly_chart(fig, use_container_width=True)
-        st.session_state.pareto_fig = fig
-    else:
-        pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True)
-
+        events 
 
 #  ---------------------  Diagnostics --------------------------------------
 
@@ -787,10 +824,3 @@ if st.button('Reponse test'):
     #st.session_state.results_on_gen.to_pickle('ev_pareto_on_gen.pkl')
 
 
-
-df = px.data.iris()  # iris is a pandas DataFrame
-fig = px.scatter(df, x="sepal_width", y="sepal_length")
-
-event = st.plotly_chart(fig, key="iris", on_select="rerun")
-
-event
