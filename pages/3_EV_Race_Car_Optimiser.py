@@ -79,6 +79,9 @@ if "fitness_gen" not in st.session_state:
 if "pareto_plot_placeholder" not in st.session_state:
     st.session_state.pareto_plot_placeholder = None
 
+if "fitness_plot_placeholder" not in st.session_state:
+    st.session_state.fitness_plot_placeholder = None
+
 if "pareto_fig" not in st.session_state:
     st.session_state.pareto_fig = None
 
@@ -143,8 +146,6 @@ def plot_fitness():
     fig.update_layout(
         yaxis_title='Fitness',
         xaxis_title='Iteration',
-        yaxis_range=[0.95,1],
-        xaxis_range=[0,10],
         showlegend=False,
         height=250,
         margin=dict(l=20, r=20, t=20, b=20))
@@ -538,6 +539,20 @@ def on_generation(ga_instance):
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
     st.session_state.fitness_gen.append(solution_fitness)
+    #fig = plot_fitness()
+    x = list(range(0,len(st.session_state.fitness_gen)))
+
+    if "data" in st.session_state.fitness_fig:
+        st.session_state.fitness_fig.data[0].x = x
+        st.session_state.fitness_fig.data[0].y = st.session_state.fitness_gen
+    else:
+        st.session_state.fitness_fig = plot_fitness()
+
+
+    st.session_state.fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig, use_container_width=True)
+    time.sleep(1.01)
+
+
 
 
 def simulate_pipeline(solution):
@@ -588,16 +603,14 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
     with col2:
 
-        if st.session_state.fitness_fig == None:
+        if st.session_state.fitness_plot_placeholder == None:
             fig = go.Figure()
             fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
             fig.update_layout(
                 xaxis_title='Iteration',
                 yaxis=dict(title='Fitness'),
                 template='plotly_dark')
-            st.session_state.fitness_fig = fig
-        fitness_plot_placeholder = st.plotly_chart(st.session_state.fitness_fig, use_container_width=True)
-
+            st.session_state.fitness_plot_placeholder = st.plotly_chart(fig, use_container_width=True)
 
 
     
@@ -624,10 +637,11 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         st.session_state.pareto_plot_placeholder.plotly_chart(fig, use_container_width=True)
 
 
-    print(st.session_state.pareto_plot_placeholder)
-
 
     if start:
+
+        st.session_state.fitness_fig = plot_fitness()
+        st.session_state.fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig , use_container_width=True)
 
         if st.session_state.pareto_fig is not None:
             st.session_state.pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True)
@@ -638,8 +652,6 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         result = {}
         for index, bias in enumerate(range_list):
             
-
-            time.sleep(0.01)
             my_bar.progress((index+1)/len(range_list), text=progress_text)
             st.session_state.fitness_gen = []
 
@@ -689,12 +701,18 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         st.session_state.pareto_fig = plot_pareto()
 
 
+# Fitness plot: reload fig if it exist or plot an empty figure
+if st.session_state.fitness_fig is not None:  
+    st.session_state.fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig, use_container_width=True, on_select="rerun")
+
 # Pareto plot: reload fig if it exist or plot an empty figure
 if st.session_state.pareto_plot_placeholder is not None:  
     if st.session_state.pareto_fig is not None:  
         events = st.session_state.pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True, on_select="rerun")
 
         events 
+
+
 
 #  ---------------------  Diagnostics --------------------------------------
 
