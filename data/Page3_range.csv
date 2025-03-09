@@ -1,0 +1,5 @@
+﻿,rotorAngle,rotorDiameter
+Value,110.0,200.0
+Min,90.0,160.0
+Max,180.0,240.0
+Initial,110.0,200.0
