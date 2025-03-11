@@ -126,6 +126,7 @@ df_input = pd.DataFrame({
     'Brake':brake,
 })
 track_length = 300.0
+steps = 50
 
 
 # Functions
@@ -444,6 +445,22 @@ def simulate_vehicle(
     y = 1-ageing_acceleration_factor*np.square(mileage/(max_mileage))
     y_age,x_age = filter_soh(y,mileage)
 
+    v_spec = {
+        "rotor_v_angle_deg":rotor_v_angle_deg,
+        "rotor_dia_mm":rotor_dia_mm,
+        "motor_max_rpm_knee":motor_max_rpm_knee,
+        "motor_efficiency":motor_efficiency,
+        "vehicle_weight":vehicle_weight,
+        "drag_coeff":drag_coeff,
+        "frontal_area":frontal_area,
+        "battery_capacity":battery_capacity,
+        "eta_regen":eta_regen,
+        "wheel_radius_m":wheel_radius_m,
+        "rolling_coeff":rolling_coeff,
+        "drivetrain_efficiency":drivetrain_efficiency,
+        "reduction_ratio":reduction_ratio,
+    }
+
     output = {
         "df_result":df_result,
         "efficiency_map":efficiency_map,
@@ -453,7 +470,8 @@ def simulate_vehicle(
         "motor_torque_nm":motor_torque_nm,
         "lap_time":lap_time,
         "x_age":x_age,
-        "y_age":y_age
+        "y_age":y_age,
+        "vehicle_spec":v_spec
     }
 
     return output
@@ -516,13 +534,14 @@ with st.expander('Motor data and assumptions', expanded=False):
     col2.plotly_chart(fig7_motor, use_container_width=True)
 
 
+
 def rescale_solution(solution):
     solution = np.double(solution)
     df = st.session_state.df_gen
     d = {}
     for index, var in enumerate(st.session_state.columns):
         dff = df[var]
-        out= solution[index]*(dff['Max']-dff['Min'])/100 + dff['Min']
+        out= solution[index]*(dff['Max']-dff['Min'])/steps + dff['Min']
         d[var] =out
     return d
 
@@ -531,18 +550,18 @@ def rescale_solution_2d(solution):
     d = {}
     for index, var in enumerate(st.session_state.columns):
         dff = df[var]
-        out= solution[:,index]*(dff['Max']-dff['Min'])/100 + dff['Min']
+        out= solution[:,index]*(dff['Max']-dff['Min'])/steps + dff['Min']
         d[var] =out
     return d
 
 def on_generation(ga_instance):
 
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
+
     st.session_state.fitness_gen.append(solution_fitness)
-    #fig = plot_fitness()
-    x = list(range(0,len(st.session_state.fitness_gen)))
 
     if "data" in st.session_state.fitness_fig:
+        x = list(range(0,len(st.session_state.fitness_gen)))
         st.session_state.fitness_fig.data[0].x = x
         st.session_state.fitness_fig.data[0].y = st.session_state.fitness_gen
     else:
@@ -559,14 +578,14 @@ def simulate_pipeline(solution):
     rotor_dia_mm = solution['rotorDiameter']
     rotor_v_angle_deg = solution['rotorAngle']
     out = simulate_vehicle(rotor_v_angle_deg,rotor_dia_mm)
-    return out['lap_time'], out['x_age'], out['motor_power_watt'], out['motor_torque_nm']
+    return out['lap_time'], out['x_age'], out['motor_power_watt'], out['motor_torque_nm'], out['vehicle_spec']
 
 def fitness_func(bias):
 
     def fitness_func(ga_instance, solutionValue, solution_idx):
 
         solution = rescale_solution(solutionValue)
-        lap_time, x_ageing, motor_power, torque = simulate_pipeline(solution)
+        lap_time, x_ageing, motor_power, torque, _ = simulate_pipeline(solution)
        
         perf_mod = 20/lap_time
         durab_mod = (x_ageing[-1]-20000)/(100000-20000)
@@ -636,6 +655,31 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
             template='plotly_dark')
         st.session_state.pareto_plot_placeholder.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
+
+    st.write('Vehicle metrics')
+    col1, col2, col3 = st.columns([1,1,1])
+    col1.write('Vehicle spefications:')
+    s1 = col1.empty()
+
+    col2.write('Results:')
+    s2 = col2.empty()
+
+    st.write('Vehicle performance')
+    s3 = st.empty()
+
+    col1, col2 = st.columns([1,1])
+    p1 = col1.empty()
+    p2 = col2.empty()
+
+    col1, col2 = st.columns([1,1])
+    p3 = col1.empty()
+    p4 = col2.empty()
+
+    col1, col2 = st.columns([1,1])
+    p5 = col1.empty()
+    p6 = col2.empty()
+
 
 
     if start:
@@ -651,12 +695,12 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
         st.session_state.results_on_gen = []
         result = {}
         for index, bias in enumerate(range_list):
-            
+
             my_bar.progress((index+1)/len(range_list), text=progress_text)
             st.session_state.fitness_gen = []
 
             num_parents_mating = 2  # Increase parents mating
-            sol_per_pop = 10  # Increase population size
+            sol_per_pop = 5  # Increase population size
             num_genes = 2
             mutation_type = "random"
             fitness_function = fitness_func(bias)
@@ -664,11 +708,12 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
                                 num_parents_mating=num_parents_mating,
                                 fitness_func=fitness_function,
                                 sol_per_pop=sol_per_pop,
-                                gene_space={'low': 0, 'high': 100, 'step': 1},                            
+                                gene_space={'low': 0, 'high': steps, 'step': 1},                            
                                 num_genes=num_genes,
                                 gene_type=int,
                                 stop_criteria="saturate_5",
                                 mutation_type=mutation_type,
+                                mutation_num_genes=1,
                                 on_generation=on_generation,
                             )
             
@@ -677,11 +722,11 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
             solution = rescale_solution(ga_instance.best_solution()[0])
 
 
-            lap_time, x_ageing, motor_power, torque = simulate_pipeline(solution)
+            lap_time, x_ageing, motor_power, torque, vehicle_spec = simulate_pipeline(solution)
 
             #st.write(f"{solution} - Laptime: {lap_time} - Durab: {x_ageing[-1]}")
 
-            r1 = {'Bias':bias, 'Durability': x_ageing[-1], 'LapTime': lap_time, 'MotorPower': motor_power,'Torque': torque}
+            r1 = {'Bias':bias, 'Durability': x_ageing[-1], 'LapTime': lap_time, 'MotorPower': motor_power,'Torque': torque, 'VehicleSpec': vehicle_spec}
 
             r1.update(solution)
             result[index] = r1
@@ -689,10 +734,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
             #st.session_state.fitness_fig = plot_fitness()
             #fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig, use_container_width=True)
-            time.sleep(1)
 
-
-        time.sleep(1)
         my_bar.empty()    
 
         st.session_state.results =  pd.DataFrame.from_dict(result).T
@@ -710,8 +752,97 @@ if st.session_state.pareto_plot_placeholder is not None:
     if st.session_state.pareto_fig is not None:  
         events = st.session_state.pareto_plot_placeholder.plotly_chart(st.session_state.pareto_fig, use_container_width=True, on_select="rerun")
 
-        events 
+        if events["selection"]["points"]:
 
+            points_index = events["selection"]["points"][0]["point_index"]
+            s1.write(f'Selected point: {points_index}')
+
+            x = events["selection"]["points"][0]["x"]
+            y = events["selection"]["points"][0]["y"]
+
+
+            df_results = st.session_state.results
+
+            VehicleSpec = df_results.loc[points_index,'VehicleSpec']
+            s1.table(VehicleSpec)
+
+            Results = df_results.loc[points_index,:]
+            Results.drop(['VehicleSpec','rotorAngle','rotorDiameter'],inplace=True)
+            s2.table(Results)
+
+            if s3.button('Simulate'):
+                out_competitor = simulate_vehicle()
+                out = simulate_vehicle(
+                                VehicleSpec['rotor_v_angle_deg'],
+                                VehicleSpec['rotor_dia_mm'],
+                                VehicleSpec['motor_max_rpm_knee'],
+                                VehicleSpec['motor_efficiency'],
+                                VehicleSpec['vehicle_weight'],
+                                VehicleSpec['drag_coeff'],
+                                VehicleSpec['frontal_area'],
+                                VehicleSpec['battery_capacity'],
+                                VehicleSpec['eta_regen'],
+                                VehicleSpec['wheel_radius_m'],
+                                VehicleSpec['rolling_coeff'],
+                                VehicleSpec['drivetrain_efficiency'],
+                                VehicleSpec['reduction_ratio']
+                                )
+                
+                df_comp = out_competitor['df_result']
+                df_ours = out['df_result']
+                lap_time = out['lap_time']
+                lap_time_competitor = out_competitor['lap_time']
+                x_lap_delta, y_lap_delta = calculate_time_delta(df_ours,df_comp)
+
+
+                # Plot
+                fig1 = go.Figure()
+                fig1.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['speed'], mode='lines', name='Competitor'))
+                fig1.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['speed'], mode='lines', name='Our'))
+                fig1.update_layout(title='Vehicle Speed', xaxis_title='Time (s)', yaxis_title='Speed (km/h)',template='plotly_dark')
+
+                fig2 = go.Figure()
+                fig2.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['soc'], mode='lines', name='Competitor'))
+                fig2.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['soc'], mode='lines', name='Our'))
+                fig2.update_layout(title='Battery SoC', xaxis_title='Time (s)', yaxis_title='State of Charge (SoC)',template='plotly_dark')
+
+                fig3 = go.Figure()
+                fig3.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['motor_power'], mode='lines', name='Competitor'))
+                fig3.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['motor_power'], mode='lines', name='Our'))
+                fig3.update_layout(title='Motor Power', xaxis_title='Time (s)', yaxis_title='Power (kW)',template='plotly_dark')
+
+                fig4 = go.Figure()
+                fig4.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['distance'], mode='lines', name='Competitor'))
+                fig4.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['distance'], mode='lines', name='Our'))
+                fig4.add_trace(go.Scatter(x=x_lap_delta, y=y_lap_delta, mode='lines', yaxis='y2', name='Lap delta',showlegend=True))
+                fig4.update_layout(title='Lap Distance (m)', xaxis_title='Time (s)', yaxis=dict(title='Distance (m)'), yaxis2=dict(title='Time delta (s)', overlaying='y',side='right'),template='plotly_dark')
+
+                fig5 = go.Figure()
+                fig5.add_trace(
+                    go.Contour(
+                        z=out["efficiency_map"],
+                        x=out["speed_range"],
+                        y=out["torque_range"],
+                        colorscale='Viridis',colorbar=dict(title='Efficiency'),contours=dict(showlabels=True))
+                    )
+                fig5.add_trace(go.Scatter(x=[s for s in df_comp['speed'] if s > 0], y=df_ours['torque'], mode='markers', name='Operating Points'))
+
+                fig5.update_layout(title='Motor Efficiency Map with Operating Points', xaxis_title='Speed (km/h)', yaxis=dict(title='Torque (N)'),template='plotly_dark')
+
+                fig6 = go.Figure()
+                fig6.add_trace(go.Scatter(x=out_competitor["x_age"], y=out_competitor["y_age"], mode='lines',name='Competitor'))
+                fig6.add_trace(go.Scatter(x=out["x_age"], y=out["y_age"], mode='lines',name='Ours'))
+                fig6.update_yaxes(range=[0, 1])
+                fig6.update_layout(title='Remaining Useful Life', xaxis_title='Mileage (Miles)', yaxis=dict(title='State of Health (SoH)'),template='plotly_dark')
+
+
+
+                p1.plotly_chart(fig1, use_container_width=True)
+                p2.plotly_chart(fig2, use_container_width=True)
+                p3.plotly_chart(fig3, use_container_width=True)
+                p4.plotly_chart(fig4, use_container_width=True)
+                p5.plotly_chart(fig5, use_container_width=True)
+                p6.plotly_chart(fig6, use_container_width=True)
 
 
 #  ---------------------  Diagnostics --------------------------------------
@@ -834,7 +965,9 @@ with st.expander('Sanity check', expanded=False):
             st.plotly_chart(fig5, use_container_width=True)
 
 
-if st.button('Reponse test'):
+if st.button('Response test'):
+    #start_time = time.time()
+    #out = simulate_vehicle()
     time_elapsed = datetime.now() - start_time 
     print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
 
