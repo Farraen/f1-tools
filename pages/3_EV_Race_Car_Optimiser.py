@@ -644,7 +644,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
     st.divider()
 
 
-
+    st.write('Load a saved file instead of running the optimiser.')
     if st.button('Load file'):
         st.session_state.results = pd.read_pickle('ev_pareto_final.pkl')
         st.session_state.results_on_gen = pd.read_pickle('ev_pareto_on_gen.pkl')
@@ -677,6 +677,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
     s2 = col2.empty()
 
     t4 = st.empty()
+    t5 = st.empty()
     s3 = st.empty()
 
     col1, col2 = st.columns([1,1])
@@ -781,6 +782,7 @@ if st.session_state.pareto_plot_placeholder is not None:
             Results.drop(['VehicleSpec','rotorAngle','rotorDiameter'],inplace=True)
             s2.table(Results)
 
+            t5.write('Press the button below to run the vehicle model.')
             if s3.button('Simulate'):
                 out_competitor = simulate_vehicle()
                 out = simulate_vehicle(
