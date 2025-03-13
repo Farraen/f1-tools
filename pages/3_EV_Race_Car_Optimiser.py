@@ -476,17 +476,22 @@ def simulate_vehicle(
 
     return output
 
+@st.cache_data
+def load_images_once():
+    image1 = read_image("images/ev.png")
+    image2 = read_image("images/ev_flow.png")
+    return image1, image2
+
+image1, image2 = load_images_once()
 
 with st.expander('Introduction', expanded=True):
     col1, col2 = st.columns([1,1])
-    col1.write('A simple EV race car simulator with regenerative braking. At the moment, the throttle and brake pedal is fixed for simplicity. Future upgrades will include actual lap data from F1 or similar.')
+    col1.write('A simple EV race car simulator amd motor design optimiser with regenerative braking. At the moment, the throttle and brake pedal inputs is fixed for simplicity. Future upgrades will include actual lap data from F1 or similar.')
 
     col1.write('Future plans:')
     col1.markdown(
         """
-        - Simple open-source battery model
-        - Incorporate motor design
-        - Optimisation and decision engine
+        - Decision engine using ML
         - More realistic track data
         - Animations
         """
@@ -494,8 +499,11 @@ with st.expander('Introduction', expanded=True):
 
     col1.write('Inspired by Jonathan Blissett bike simulator: https://github.com/jonblissett/bike-sim')
 
-    image = read_image("images/ev.png")
-    col2.image(image)
+    col2.image(image1)
+
+with st.expander('Mathematical description',expanded=False):
+    st.image(image2)
+
 
 with st.expander('Motor data and assumptions', expanded=False):
 
@@ -644,6 +652,8 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
 
     st.write('Pareto plot of the optimisation results')
+    st.caption('Click on any red markers to view results')
+
     # Pareto plot: reload fig if it exist or plot an empty figure
     if st.session_state.pareto_plot_placeholder == None:
         st.session_state.pareto_plot_placeholder = st.empty()
@@ -657,15 +667,16 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
     st.divider()
 
-    st.write('Vehicle metrics')
+    t1 = st.empty()
+
     col1, col2, col3 = st.columns([1,1,1])
-    col1.write('Vehicle spefications:')
+    t2 = col1.empty()
     s1 = col1.empty()
 
-    col2.write('Results:')
+    t3 = col2.empty()
     s2 = col2.empty()
 
-    st.write('Vehicle performance')
+    t4 = st.empty()
     s3 = st.empty()
 
     col1, col2 = st.columns([1,1])
@@ -835,6 +846,10 @@ if st.session_state.pareto_plot_placeholder is not None:
                 fig6.update_yaxes(range=[0, 1])
                 fig6.update_layout(title='Remaining Useful Life', xaxis_title='Mileage (Miles)', yaxis=dict(title='State of Health (SoH)'),template='plotly_dark')
 
+                t1.write('Vehicle metrics')
+                t2.write('Vehicle spefications:')
+                t3.write('Results:')
+                t4.write('Vehicle performance')
 
 
                 p1.plotly_chart(fig1, use_container_width=True)
@@ -965,13 +980,4 @@ with st.expander('Sanity check', expanded=False):
             st.plotly_chart(fig5, use_container_width=True)
 
 
-if st.button('Response test'):
-    #start_time = time.time()
-    #out = simulate_vehicle()
-    time_elapsed = datetime.now() - start_time 
-    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
-
-    #st.session_state.results.to_pickle('ev_pareto_final.pkl')
-    #st.session_state.results_on_gen.to_pickle('ev_pareto_on_gen.pkl')
-
-
+st.write('Copyright © 2025 Farraen. All rights reserved.')
