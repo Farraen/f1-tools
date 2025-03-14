@@ -811,22 +811,22 @@ if st.session_state.pareto_plot_placeholder is not None:
                 # Plot
                 fig1 = go.Figure()
                 fig1.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['speed'], mode='lines', name='Competitor'))
-                fig1.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['speed'], mode='lines', name='Our'))
+                fig1.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['speed'], mode='lines', name='Ours'))
                 fig1.update_layout(title='Vehicle Speed', xaxis_title='Time (s)', yaxis_title='Speed (km/h)',template='plotly_dark')
 
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['soc'], mode='lines', name='Competitor'))
-                fig2.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['soc'], mode='lines', name='Our'))
+                fig2.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['soc'], mode='lines', name='Ours'))
                 fig2.update_layout(title='Battery SoC', xaxis_title='Time (s)', yaxis_title='State of Charge (SoC)',template='plotly_dark')
 
                 fig3 = go.Figure()
                 fig3.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['motor_power'], mode='lines', name='Competitor'))
-                fig3.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['motor_power'], mode='lines', name='Our'))
+                fig3.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['motor_power'], mode='lines', name='Ours'))
                 fig3.update_layout(title='Motor Power', xaxis_title='Time (s)', yaxis_title='Power (kW)',template='plotly_dark')
 
                 fig4 = go.Figure()
                 fig4.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['distance'], mode='lines', name='Competitor'))
-                fig4.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['distance'], mode='lines', name='Our'))
+                fig4.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['distance'], mode='lines', name='Ours'))
                 fig4.add_trace(go.Scatter(x=x_lap_delta, y=y_lap_delta, mode='lines', yaxis='y2', name='Lap delta',showlegend=True))
                 fig4.update_layout(title='Lap Distance (m)', xaxis_title='Time (s)', yaxis=dict(title='Distance (m)'), yaxis2=dict(title='Time delta (s)', overlaying='y',side='right'),template='plotly_dark')
 
@@ -917,22 +917,22 @@ with st.expander('Sanity check', expanded=False):
         # Plot
         fig1 = go.Figure()
         fig1.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['speed'], mode='lines', name='Competitor'))
-        fig1.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['speed'], mode='lines', name='Our'))
+        fig1.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['speed'], mode='lines', name='Ours'))
         fig1.update_layout(title='Vehicle Speed', xaxis_title='Time (s)', yaxis_title='Speed (km/h)',template='plotly_dark')
 
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['soc'], mode='lines', name='Competitor'))
-        fig2.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['soc'], mode='lines', name='Our'))
+        fig2.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['soc'], mode='lines', name='Ours'))
         fig2.update_layout(title='Battery SoC', xaxis_title='Time (s)', yaxis_title='State of Charge (SoC)',template='plotly_dark')
 
         fig3 = go.Figure()
         fig3.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['motor_power'], mode='lines', name='Competitor'))
-        fig3.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['motor_power'], mode='lines', name='Our'))
+        fig3.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['motor_power'], mode='lines', name='Ours'))
         fig3.update_layout(title='Motor Power', xaxis_title='Time (s)', yaxis_title='Power (kW)',template='plotly_dark')
 
         fig4 = go.Figure()
         fig4.add_trace(go.Scatter(x=df_comp['time'], y=df_comp['distance'], mode='lines', name='Competitor'))
-        fig4.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['distance'], mode='lines', name='Our'))
+        fig4.add_trace(go.Scatter(x=df_ours['time'], y=df_ours['distance'], mode='lines', name='Ours'))
         fig4.add_trace(go.Scatter(x=x_lap_delta, y=y_lap_delta, mode='lines', yaxis='y2', name='Lap delta',showlegend=True))
         fig4.update_layout(title='Lap Distance (m)', xaxis_title='Time (s)', yaxis=dict(title='Distance (m)'), yaxis2=dict(title='Time delta (s)', overlaying='y',side='right'),template='plotly_dark')
 
