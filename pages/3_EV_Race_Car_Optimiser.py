@@ -637,6 +637,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
                 xaxis_title='Iteration',
                 yaxis=dict(title='Fitness'),
                 template='plotly_dark')
+            st.session_state.fitness_fig = fig
             st.session_state.fitness_plot_placeholder = st.plotly_chart(fig, use_container_width=True)
 
 
