@@ -611,7 +611,7 @@ def fitness_func(bias):
 
 
 with st.expander('Vehicle parameter optimiser', expanded=True):
-
+    st.write('This is the panel run an optimiser to get best motor design depending on the function objective selected. The motor design parameters that can be optimised are v magnet angle and rotor diameter. Future version of the tool will include more motor design parameters.')
     col1, col2 = st.columns([0.5,1],gap='medium')
     with col1:
         st.write('Objectives')
