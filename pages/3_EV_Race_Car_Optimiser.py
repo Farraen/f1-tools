@@ -10,7 +10,9 @@ import plotly.graph_objects as go
 from scipy.interpolate import interp1d
 import pygad
 from datetime import datetime 
-import seaborn as sns
+import pandas as pd
+from catboost import CatBoostRegressor
+from sklearn.model_selection import train_test_split
 
 
 start_time = datetime.now() 
@@ -19,7 +21,7 @@ start_time = datetime.now()
 # --------  For page layout  ---------------
 st.set_page_config(layout="wide")
 
-st.subheader('EV Race Car Simulator')
+st.subheader('EV Race Car Simulator and Motor Generative Design')
 
 
 # ----------- Functions --------------------------
@@ -82,20 +84,66 @@ if "pareto_plot_placeholder" not in st.session_state:
 if "fitness_plot_placeholder" not in st.session_state:
     st.session_state.fitness_plot_placeholder = None
 
+if "fitness_gen_2" not in st.session_state:
+    st.session_state.fitness_gen_2 = []
+
+
+if "ml_plot_placeholder_1" not in st.session_state:
+    st.session_state.ml_plot_placeholder_1 = None
+
+if "ml_plot_placeholder_2" not in st.session_state:
+    st.session_state.ml_plot_placeholder_2 = None
+
+if "ml_plot_placeholder_3" not in st.session_state:
+    st.session_state.ml_plot_placeholder_3 = None
+
+if "ml_plot_placeholder_4" not in st.session_state:
+    st.session_state.ml_plot_placeholder_4 = None
+
+if "ml_plot_placeholder_5" not in st.session_state:
+    st.session_state.ml_plot_placeholder_5 = None
+
+if "ml_loss_fig_1" not in st.session_state:
+    st.session_state.ml_loss_fig_1 = None
+
+if "ml_loss_fig_2" not in st.session_state:
+    st.session_state.ml_loss_fig_2 = None
+
+if "ml_loss_fig_3" not in st.session_state:
+    st.session_state.ml_loss_fig_3 = None
+
+if "ml_loss_fig_4" not in st.session_state:
+    st.session_state.ml_loss_fig_4 = None
+
+if "ml_loss_fig_5" not in st.session_state:
+    st.session_state.ml_loss_fig_5 = None
+
+
+if "method_1" not in st.session_state:
+    st.session_state.method_1 = '-'
+
+if "method_2" not in st.session_state:
+    st.session_state.method_2 = '-'
+
 if "pareto_fig" not in st.session_state:
     st.session_state.pareto_fig = None
 
 if "fitness_fig" not in st.session_state:
     st.session_state.fitness_fig = None
 
+
+
 if "results" not in st.session_state:
     st.session_state.results = []
 
 if "results_on_gen" not in st.session_state:
-    st.session_state.results_on_gen = []
+    st.session_state.results_on_gen = None
 
 if "Tmax" not in st.session_state:
     st.session_state['Tmax'] = []
+
+if "ml" not in st.session_state:
+    st.session_state['ml'] = None
 
 
 df = load_range('data/Page3_range.csv')
@@ -476,6 +524,42 @@ def simulate_vehicle(
 
     return output
 
+
+
+def find_pareto_front(df, maxX=True, maxY=True):
+    """
+    Identifies the Pareto frontier based on the first two columns of the DataFrame.
+    Returns a filtered DataFrame containing only the Pareto front points.
+    
+    Parameters:
+    - df: Input DataFrame. Only the first two columns will be used.
+    - maxX: Boolean, whether to maximize the first column.
+    - maxY: Boolean, whether to maximize the second column.
+    """
+    # Extract the first two columns for Pareto calculation
+    Xs = df.iloc[:, 1].values  # First column
+    Ys = df.iloc[:,4].values  # Second column
+
+    # Sort points based on maxX and maxY preferences
+    sorted_list = sorted(
+        [[Xs[i], Ys[i], i] for i in range(len(Xs))],  # Store the index for later filtering
+        key=lambda x: (-x[0] if maxX else x[0], -x[1] if maxY else x[1])
+    )
+    
+    pareto_front = [sorted_list[0]]
+    for pair in sorted_list[1:]:
+        if maxY:
+            if pair[1] >= pareto_front[-1][1]:  # Keep if it dominates in Y (maximizing)
+                pareto_front.append(pair)
+        else:
+            if pair[1] <= pareto_front[-1][1]:  # Keep if it dominates in Y (minimizing)
+                pareto_front.append(pair)
+
+    # Extract the indices of Pareto points
+    pareto_indices = [pair[2] for pair in pareto_front]
+
+    # Filter the original DataFrame using the Pareto indices
+    return df.iloc[pareto_indices].reset_index(drop=True)
 @st.cache_data
 def load_images_once():
     image1 = read_image("images/ev.png")
@@ -491,7 +575,6 @@ with st.expander('Introduction', expanded=True):
     col1.write('Future plans:')
     col1.markdown(
         """
-        - Decision engine using ML
         - More realistic track data
         - Animations
         """
@@ -610,39 +693,266 @@ def fitness_func(bias):
     return fitness_func
 
 
+
+def train_ml(df_train,my_bar_ml):
+
+    my_bar_ml.progress(10, text="Preparing training data...")
+
+    # Split the data into features and target
+    X = df_train[["rotorAngle","rotorDiameter","Bias"]]
+    y = df_train[['LapTime','Durability','MotorPower','Torque']]
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    my_bar_ml.progress(30, text="Training model...")
+
+    # Initialize the CatBoostRegressor
+    model = CatBoostRegressor(
+        iterations=500, learning_rate=0.05, depth=4, loss_function='MultiRMSE',
+        verbose=200)
+
+    # Fit the model
+    model.fit(X_train, y_train)
+    st.session_state.ml = model
+
+    my_bar_ml.progress(70, text="Model is ready.")
+
+
+    column_names = ['LapTime','Durability','MotorPower','Torque']
+    predictions = model.predict(X_test)
+    df_predictions = pd.DataFrame(predictions,columns=column_names)
+
+    my_bar_ml.progress(80, text="Plotting results...")
+
+    fig = go.Figure()
+    loss = model.get_evals_result()['learn']['MultiRMSE']
+    fig.add_trace(go.Scatter(y=loss, mode='lines',showlegend=False))
+    fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(
+        xaxis_title='Iteration',
+        yaxis=dict(title='Loss'),
+        template='plotly_dark')
+    st.session_state.ml_loss_fig_1 = fig
+    st.session_state.ml_plot_placeholder_1.plotly_chart(fig, use_container_width=True)
+
+
+    col = 0
+    fig = go.Figure()
+    x,y = y_test[column_names[col]],df_predictions[column_names[col]]
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',showlegend=False))
+    fig.add_trace(go.Scatter(x=[x.min(), x.max()], y=[y.min(), y.max()], mode='lines',showlegend=False))    
+    fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(
+        xaxis_title='Actual',
+        yaxis=dict(title='Predicted'),
+        template='plotly_dark')
+    st.session_state.ml_loss_fig_2 = fig
+    st.session_state.ml_plot_placeholder_2.plotly_chart(fig, use_container_width=True)
+
+
+
+    col = 1
+    fig = go.Figure()
+    x,y = y_test[column_names[col]],df_predictions[column_names[col]]
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',showlegend=False))
+    fig.add_trace(go.Scatter(x=[x.min(), x.max()], y=[y.min(), y.max()], mode='lines',showlegend=False))    
+    fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(
+        xaxis_title='Actual',
+        yaxis=dict(title='Predicted'),
+        template='plotly_dark')
+    st.session_state.ml_loss_fig_3 = fig
+    st.session_state.ml_plot_placeholder_3.plotly_chart(fig, use_container_width=True)
+
+
+    col = 2
+    fig = go.Figure()
+    x,y = y_test[column_names[col]],df_predictions[column_names[col]]
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',showlegend=False))
+    fig.add_trace(go.Scatter(x=[x.min(), x.max()], y=[y.min(), y.max()], mode='lines',showlegend=False))    
+    fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(
+        xaxis_title='Actual',
+        yaxis=dict(title='Predicted'),
+        template='plotly_dark')
+    st.session_state.ml_loss_fig_4 = fig
+    st.session_state.ml_plot_placeholder_4.plotly_chart(fig, use_container_width=True)
+
+    col = 3
+    fig = go.Figure()
+    x,y = y_test[column_names[col]],df_predictions[column_names[col]]
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',showlegend=False))
+    fig.add_trace(go.Scatter(x=[x.min(), x.max()], y=[y.min(), y.max()], mode='lines',showlegend=False))    
+    fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+    fig.update_layout(
+        xaxis_title='Actual',
+        yaxis=dict(title='Predicted'),
+        template='plotly_dark')
+    st.session_state.ml_loss_fig_5 = fig
+    st.session_state.ml_plot_placeholder_5.plotly_chart(fig, use_container_width=True)
+
+    my_bar_ml.progress(100, text="Done.")
+    my_bar_ml.empty()    
+
+
+
+
+
 with st.expander('Vehicle parameter optimiser', expanded=True):
+
     st.write('This is the panel run an optimiser to get best motor design depending on the function objective selected. The motor design parameters that can be optimised are v magnet angle and rotor diameter. Future version of the tool will include more motor design parameters.')
+
+
+
+    st.write('Function objectives')
     col1, col2 = st.columns([0.5,1],gap='medium')
     with col1:
-        st.write('Objectives')
+        st.caption('Use the slider to change the optmiser bias range. It is a range slider and the optimser will run a few times depending one the selected bias range.')
+
+    with col2:
         start_target, end_target = st.select_slider(
             'Select optimisation target',
             options=['Durability', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Performance'],
             value=('Durability', 'Performance'))
         range_list = handle_range(start_target, end_target)
-        num_generations = st.number_input("Number of generation", value=20, placeholder="Type a number...")
 
-        start = st.button('Optimise')
-
-        my_bar = st.empty()
+    st.divider()
 
 
+
+    # Description
+    col1, col2 = st.columns([1,1],gap='medium')
+    with col1:
+        st.write('Method A: Genetic Algorithm as the decision engine')
+        st.caption('This method uses GA to create new designs.')
 
     with col2:
+        st.write('Method B: Machine Learning mode as the decision engine')
+        st.caption('Please run the optimiser once and press Train to initiate learning process.')
+    
+
+
+    m1 = st.empty()
+
+    col1, col2 = st.columns([1,1],gap='medium')
+    with col1:
+        num_generations = st.number_input("Number of generation", value=20, placeholder="Type a number...")
 
         if st.session_state.fitness_plot_placeholder == None:
-            fig = go.Figure()
-            fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
-            fig.update_layout(
-                xaxis_title='Iteration',
-                yaxis=dict(title='Fitness'),
-                template='plotly_dark')
-            st.session_state.fitness_fig = fig
-            st.session_state.fitness_plot_placeholder = st.plotly_chart(fig, use_container_width=True)
+                fig = go.Figure()
+                fig.update_layout(height=250,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Fitness'),
+                    template='plotly_dark')
+                st.session_state.fitness_fig = fig
+                st.session_state.fitness_plot_placeholder = st.plotly_chart(fig, use_container_width=True)
 
 
     
+    with col2:
+
+        col11, col22 = st.columns([1,1],gap='small')
+        with col11:
+            start_ml_train = st.button('Train use GA results')
+        with col22:
+            start_ml_train_2 = st.button('Train using previous file')
+
+        my_bar_ml = st.empty()
+        
+        st.caption('Modeling performance')
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Loss", "LapTime", "Durability","MotorPower","Torque"])
+
+        with tab1:
+            if st.session_state.ml_plot_placeholder_1 == None:
+                fig = go.Figure()
+                fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Loss'),
+                    template='plotly_dark')
+                st.session_state.ml_loss_fig_1 = fig
+                st.session_state.ml_plot_placeholder_1 = st.plotly_chart(fig, use_container_width=True)
+
+
+        with tab2:
+            if st.session_state.ml_plot_placeholder_2 == None:
+                fig = go.Figure()
+                fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Loss'),
+                    template='plotly_dark')
+                st.session_state.ml_loss_fig_2 = fig
+                st.session_state.ml_plot_placeholder_2 = st.plotly_chart(fig, use_container_width=True)
+
+        with tab3:
+            if st.session_state.ml_plot_placeholder_3 == None:
+                fig = go.Figure()
+                fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Loss'),
+                    template='plotly_dark')
+                st.session_state.ml_loss_fig_3 = fig
+                st.session_state.ml_plot_placeholder_3 = st.plotly_chart(fig, use_container_width=True)
+
+        with tab4:
+            if st.session_state.ml_plot_placeholder_4 == None:
+                fig = go.Figure()
+                fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Loss'),
+                    template='plotly_dark')
+                st.session_state.ml_loss_fig_4 = fig
+                st.session_state.ml_plot_placeholder_4 = st.plotly_chart(fig, use_container_width=True)
+
+        with tab5:
+            if st.session_state.ml_plot_placeholder_5 == None:
+                fig = go.Figure()
+                fig.update_layout(height=200,margin=dict(l=20, r=20, t=20, b=20))
+                fig.update_layout(
+                    xaxis_title='Iteration',
+                    yaxis=dict(title='Loss'),
+                    template='plotly_dark')
+                st.session_state.ml_loss_fig_5 = fig
+                st.session_state.ml_plot_placeholder_5 = st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+
+
+    col1, col2 = st.columns([1,1],gap='medium')
+    with col1:
+
+        start = st.button('Optimise')
+        my_bar = st.empty()
+
+    with col2:
+
+        start_ml = st.button('Generate designs')
+        my_bar_2 = st.empty()
+
+
+    col1, col2 = st.columns([1,1],gap='medium')
+    with col1:
+        time_metric_1 = st.metric('Computational time:',f"{st.session_state.method_1}")
+
+    with col2:
+        time_metric_2 = st.metric('Computational time:',f"{st.session_state.method_2}")
+
+
+
+
     st.divider()
+
+
+
+
 
 
     st.write('Load a saved file instead of running the optimiser.')
@@ -670,7 +980,7 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
     t1 = st.empty()
 
-    col1, col2, col3 = st.columns([1,1,1])
+    col1, col2 = st.columns([1,1])
     t2 = col1.empty()
     s1 = col1.empty()
 
@@ -694,9 +1004,97 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
     p6 = col2.empty()
 
 
+    if start_ml_train:
+        if st.session_state.results_on_gen != None:
+            df_train = st.session_state.results_on_gen
+            train_ml(df_train,my_bar_ml)
+        else:
+            my_bar_ml.error('No training data available. Please run the GA optimiser once or use the button below to load a saved file.')
+    
+    
+    if start_ml_train_2:
+        df_train = pd.read_pickle('ev_pareto_on_gen.pkl')
+        train_ml(df_train,my_bar_ml)
+
+
+    if start_ml:
+
+        start_time = datetime.now()
+
+        out = simulate_vehicle()
+        v_spec = out["vehicle_spec"]
+
+        # Define ranges for each variable
+        ranges = {
+            "angle": (90.0, 180.0),
+            "diameter": (170.0, 240.0),
+        }
+
+        # Number of random points to generate
+        num_points = 100
+
+        # Generate random points
+        data = {
+            key: np.random.uniform(low=val[0], high=val[1], size=num_points)
+            for key, val in ranges.items()
+        }
+
+        df_doe = pd.DataFrame(data)
+
+        #st.session_state.fitness_fig_2 
+        #st.session_state.fitness_plot_placeholder_2
+        progress_text = "Operation in progress. Please wait."
+        st.session_state.results_on_gen = []
+        result = {}
+        index_dict = 0
+        for index, bias in enumerate(range_list):
+
+            my_bar_2.progress((index+1)/len(range_list), text=progress_text)
+            st.session_state.fitness_gen_2 = []
+
+         
+            model = st.session_state.ml
+
+            column_names = ['LapTime','Durability','MotorPower','Torque']
+            
+            for row in df_doe.iterrows():
+
+                v_spec["rotor_v_angle_deg"] = row[1]['angle']
+                v_spec["rotor_dia_mm"] = row[1]['diameter']
+
+                predictions = model.predict([row[1]['angle'],row[1]['diameter'],bias])
+
+
+                r1 = {'Bias':bias, 'Durability': predictions[1], 'LapTime': predictions[0], 'MotorPower': predictions[2],'Torque': predictions[3], 'VehicleSpec': v_spec,'rotorAngle':row[1]['angle'],'rotorDiameter':row[1]['diameter']}
+
+                result[index_dict] = r1
+
+                index_dict = index_dict + 1
+
+
+
+
+        my_bar_2.empty()    
+
+
+        st.session_state.results_on_gen =  pd.DataFrame.from_dict(result).T
+        st.session_state.results = find_pareto_front(st.session_state.results_on_gen)
+
+        st.session_state.pareto_fig = plot_pareto()
+
+        end_time = datetime.now()
+        elapsed_time = end_time - start_time
+        minutes, seconds = divmod(elapsed_time.total_seconds(), 60)
+        # Format minutes and seconds with two digits
+        minutes = str(int(minutes)).zfill(2)
+        seconds = str(int(seconds)).zfill(2)
+        st.session_state.method_2 = f"{minutes}:{seconds}"
+
+
 
     if start:
-
+        start_time = datetime.now()
+        
         st.session_state.fitness_fig = plot_fitness()
         st.session_state.fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig , use_container_width=True)
 
@@ -755,10 +1153,46 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
         st.session_state.pareto_fig = plot_pareto()
 
+        end_time = datetime.now()
+        elapsed_time = end_time - start_time
+        minutes, seconds = divmod(elapsed_time.total_seconds(), 60)
+        # Format minutes and seconds with two digits
+        minutes = str(int(minutes)).zfill(2)
+        seconds = str(int(seconds)).zfill(2)
+        st.session_state.method_1 = f"{minutes}:{seconds}"
+
+
+time_metric_1.metric('Elaped time:',f"{st.session_state.method_1}")
+time_metric_2.metric('Elaped time:',f"{st.session_state.method_2}")
 
 # Fitness plot: reload fig if it exist or plot an empty figure
 if st.session_state.fitness_fig is not None:  
     st.session_state.fitness_plot_placeholder.plotly_chart(st.session_state.fitness_fig, use_container_width=True, on_select="rerun")
+
+
+
+# Ml plot replot
+
+if st.session_state.ml_loss_fig_1 is not None:  
+    st.session_state.ml_plot_placeholder_1.plotly_chart(st.session_state.ml_loss_fig_1, use_container_width=True)
+
+if st.session_state.ml_loss_fig_2 is not None:  
+    st.session_state.ml_plot_placeholder_2.plotly_chart(st.session_state.ml_loss_fig_2, use_container_width=True)
+
+if st.session_state.ml_loss_fig_3 is not None:  
+    st.session_state.ml_plot_placeholder_3.plotly_chart(st.session_state.ml_loss_fig_3, use_container_width=True)
+
+if st.session_state.ml_loss_fig_4 is not None:  
+    st.session_state.ml_plot_placeholder_4.plotly_chart(st.session_state.ml_loss_fig_4, use_container_width=True)
+
+if st.session_state.ml_loss_fig_5 is not None:  
+    st.session_state.ml_plot_placeholder_5.plotly_chart(st.session_state.ml_loss_fig_5, use_container_width=True)
+
+
+
+
+
+
 
 # Pareto plot: reload fig if it exist or plot an empty figure
 if st.session_state.pareto_plot_placeholder is not None:  
