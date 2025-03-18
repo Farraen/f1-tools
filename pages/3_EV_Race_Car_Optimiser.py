@@ -1005,12 +1005,12 @@ with st.expander('Vehicle parameter optimiser', expanded=True):
 
 
     if start_ml_train:
-        if st.session_state.results_on_gen != None:
+        if isinstance(st.session_state.results_on_gen,pd.DataFrame):
             df_train = st.session_state.results_on_gen
             train_ml(df_train,my_bar_ml)
         else:
             my_bar_ml.error('No training data available. Please run the GA optimiser once or use the button below to load a saved file.')
-    
+
     
     if start_ml_train_2:
         df_train = pd.read_pickle('ev_pareto_on_gen.pkl')
