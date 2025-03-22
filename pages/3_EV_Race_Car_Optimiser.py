@@ -564,9 +564,12 @@ def find_pareto_front(df, maxX=True, maxY=True):
 def load_images_once():
     image1 = read_image("images/ev.png")
     image2 = read_image("images/ev_flow.png")
-    return image1, image2
+    image3 = read_image("images/overall_ev.png")
+    image4 = read_image("images/catboost.png")
 
-image1, image2 = load_images_once()
+    return image1, image2, image3, image4
+
+image1, image2, image3, image4 = load_images_once()
 
 with st.expander('Introduction', expanded=True):
     col1, col2 = st.columns([1,1])
@@ -580,9 +583,17 @@ with st.expander('Introduction', expanded=True):
         """
     )
 
-    col1.write('Inspired by Jonathan Blissett bike simulator: https://github.com/jonblissett/bike-sim')
 
     col2.image(image1)
+    st.write('In this dashboard, we created a new method of optimisation using a decision engine which is much faster compared to typical optimisation method. We utilised all results or points visited by the optimiser and trained a decision engine (an ML model). This resulted in significantly fast design optimisation (<1 seconds vs 3 minutes) and can generated hundreds of new designs. The output is a pareto plot showing the trade-off between durability and performance. Pareto plot is much more intuitive compared to single optimisation solution.')
+
+    col1, col2 = st.columns([1,0.5])
+    col1.write('The model is catboost model, a gradient boosting model and an ensamble model. Rather than interpolating, we are dumping as many data as we can, exceeding the double-descent phenomenon limit to make it in a decision engine.')
+    col2.image(image4)
+    
+    st.image(image3)
+    st.write('Inspired by Jonathan Blissett bike simulator: https://github.com/jonblissett/bike-sim')
+
 
 with st.expander('Mathematical description',expanded=False):
     st.image(image2)
