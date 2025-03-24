@@ -1,0 +1,199 @@
+altair==5.2.0
+annotated-types==0.6.0
+ansi2html==1.9.1
+anyio==4.2.0
+appnope==0.1.4
+asttokens==3.0.0
+attrs==23.2.0
+beautifulsoup4==4.12.2
+blinker==1.7.0
+Brotli @ file:///Users/runner/miniforge3/conda-bld/brotli-split_1666788492850/work
+cachetools==5.3.2
+catboost @ https://pypi.org/packages/cp39/c/catboost/catboost-1.2.2-cp39-cp39-macosx_11_0_universal2.whl#sha256=2a7c3a081af1da25c3d25e3be249ac85a979c5dd4ab4fba5c4f5742b83c8b434
+cattrs==24.1.2
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1700303426725/work/certifi
+charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1698833585322/work
+click==8.1.7
+cloudpickle==3.0.0
+colourmap==1.1.20
+comm==0.2.2
+contourpy @ file:///Users/runner/miniforge3/conda-bld/contourpy_1673633733337/work
+cycler @ file:///home/conda/feedstock_root/build_artifacts/cycler_1696677705766/work
+d3graph==2.5.0
+daal==2023.2.1
+daal4py==2023.2.1
+dacite==1.8.1
+dash==2.14.2
+dash-core-components==2.0.0
+dash-html-components==2.0.0
+dash-table==5.0.0
+datazets==1.1.0
+debugpy==1.8.12
+decorator==5.1.1
+distro==1.9.0
+dnspython==2.4.2
+entrypoints==0.4
+et-xmlfile==1.1.0
+exceptiongroup==1.2.0
+executing==2.2.0
+Faker==22.0.0
+fastf1==3.4.4
+fastjsonschema==2.21.1
+favicon==0.7.0
+Flask==3.0.0
+FMPy==0.3.19
+fonttools @ file:///Users/runner/miniforge3/conda-bld/fonttools_1702929736798/work
+future==1.0.0
+gitdb==4.0.11
+GitPython==3.1.40
+graphviz @ file:///home/conda/feedstock_root/build_artifacts/python-graphviz_1658658635601/work
+h11==0.14.0
+htbuilder==0.6.2
+htmlmin==0.1.12
+httpcore==1.0.2
+httpx==0.26.0
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1701026962277/work
+ImageHash==4.3.1
+imageio==2.33.1
+importlib-metadata==6.11.0
+importlib-resources @ file:///home/conda/feedstock_root/build_artifacts/importlib_resources_1699364556997/work
+ipykernel==6.29.5
+ipython==8.18.1
+ismember==1.0.5
+itsdangerous==2.1.2
+jedi==0.19.2
+Jinja2==3.1.2
+joblib==1.3.2
+jsonschema==4.20.0
+jsonschema-specifications==2023.12.1
+jupyter_client==8.6.3
+jupyter_core==5.7.2
+kiwisolver @ file:///Users/runner/miniforge3/conda-bld/kiwisolver_1666805987080/work
+lark==1.1.8
+lazy_loader==0.3
+llvmlite==0.41.1
+lxml==5.0.0
+Markdown==3.5.1
+markdown-it-py==3.0.0
+markdownlit==0.0.7
+MarkupSafe==2.0.1
+matplotlib @ file:///Users/runner/miniforge3/conda-bld/matplotlib-suite_1678135704702/work
+matplotlib-inline==0.1.6
+mdurl==0.1.2
+mkl-fft @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_af8wl3mjfu/croot/mkl_fft_1695058185839/work
+mkl-random @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_0fq2s894lk/croot/mkl_random_1695059822529/work
+mkl-service==2.4.0
+more-itertools==10.1.0
+msgpack==1.0.7
+multimethod==1.10
+munkres==1.1.4
+nbformat==5.10.4
+nest-asyncio==1.5.8
+networkx==3.2.1
+numba==0.58.1
+numpy==1.23.5
+olefile @ file:///home/conda/feedstock_root/build_artifacts/olefile_1701735466804/work
+openai==1.6.1
+openpyxl==3.1.2
+orjson==3.9.10
+packaging==21.3
+pandas==1.5.3
+pandas-dq==1.28
+pandas-profiling==3.6.6
+paretoset==1.2.3
+parso==0.8.4
+patsy==0.5.5
+pexpect==4.9.0
+phik==0.12.3
+Pillow==10.0.1
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1701708255999/work
+plotly==5.17.0
+plotly-resampler==0.9.1
+pooch @ file:///home/conda/feedstock_root/build_artifacts/pooch_1698245576425/work
+prompt_toolkit==3.0.50
+protobuf==4.25.1
+psutil==6.1.1
+ptyprocess==0.7.0
+pure_eval==0.2.3
+pyaml==23.12.0
+pyarrow==14.0.2
+pydantic==2.5.3
+pydantic_core==2.14.6
+pydeck==0.8.1b0
+pygad==3.1.0
+Pygments==2.17.2
+pymdown-extensions==10.7
+pymongo==4.6.1
+pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1690737849915/work
+PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1661604839144/work
+pyswarms==1.3.0
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+python-dotenv==1.0.0
+python-louvain==0.16
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1693930252784/work
+PyWavelets==1.5.0
+PyYAML==6.0.1
+pyzmq==26.2.1
+RapidFuzz==3.12.1
+referencing==0.32.0
+requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1684774241324/work
+requests-cache==1.2.1
+retrying==1.3.4
+rich==13.7.0
+rpds-py==0.16.2
+scikit-base==0.5.1
+scikit-image==0.21.0
+scikit-learn==1.2.2
+scikit-learn-intelex==2023.2.1
+scikit-optimize==0.9.0
+scikit-plot==0.3.7
+scipy @ file:///Users/runner/miniforge3/conda-bld/scipy_1683719494879/work/dist/scipy-1.10.1-cp39-cp39-macosx_10_9_x86_64.whl#sha256=abfdd701a3120543abe6b9524f7eba5305c9d6b69a522956a8dcef9190582012
+seaborn==0.12.2
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
+smmap==5.0.1
+sniffio==1.3.0
+soupsieve==2.5
+SpeechRecognition==3.10.1
+st-annotated-text==4.0.1
+stack-data==0.6.3
+statsmodels==0.14.1
+streamlit==1.35.0
+streamlit-camera-input-live==0.2.0
+streamlit-card==1.0.0
+streamlit-d3graph==1.0.3
+streamlit-embedcode==0.1.2
+streamlit-extras==0.3.6
+streamlit-faker==0.0.3
+streamlit-image-coordinates==0.1.6
+streamlit-keyup==0.2.2
+streamlit-mic-recorder==0.0.4
+streamlit-toggle-switch==1.0.2
+streamlit-vertical-slider==2.5.5
+tangled-up-in-unicode==0.2.0
+tbb==2021.10.0
+tenacity @ file:///home/conda/feedstock_root/build_artifacts/tenacity_1692026804430/work
+threadpoolctl==3.2.0
+tifffile==2023.12.9
+timple==0.1.8
+toml==0.10.2
+toolz==0.12.0
+tornado==6.4
+tqdm==4.66.1
+trace-updater==0.0.9.1
+traitlets==5.14.1
+tsdownsample==0.1.2
+typeguard==4.1.5
+typing_extensions==4.9.0
+tzdata @ file:///home/conda/feedstock_root/build_artifacts/python-tzdata_1703878702368/work
+tzlocal==5.2
+unicodedata2 @ file:///Users/runner/miniforge3/conda-bld/unicodedata2_1695848049988/work
+url-normalize==1.4.3
+urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1699933488691/work
+validators==0.22.0
+visions==0.7.5
+wcwidth==0.2.13
+websockets==14.2
+Werkzeug==3.0.1
+wordcloud==1.9.3
+ydata-profiling==4.6.3
+zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1695255097490/work
