@@ -573,7 +573,7 @@ image1, image2, image3, image4 = load_images_once()
 
 with st.expander('Introduction', expanded=True):
     col1, col2 = st.columns([1,1])
-    col1.write('A simple EV race car simulator amd motor design optimiser with regenerative braking. At the moment, the throttle and brake pedal inputs is fixed for simplicity. Future upgrades will include actual lap data from F1 or similar.')
+    col1.write('A simple EV race car simulator and motor design optimizer featuring regenerative braking. Currently, the throttle and brake pedal inputs are fixed for simplicity. Future updates will incorporate actual lap data from F1 or similar racing formats.')
 
     col1.write('Future plans:')
     col1.markdown(
@@ -585,10 +585,10 @@ with st.expander('Introduction', expanded=True):
 
 
     col2.image(image1)
-    st.write('In this dashboard, we created a new method of optimisation using a decision engine which is much faster compared to typical optimisation method. We utilised all results or points visited by the optimiser and trained a decision engine (an ML model). This resulted in significantly fast design optimisation (<1 seconds vs 3 minutes) and can generated hundreds of new designs. The output is a pareto plot showing the trade-off between durability and performance. Pareto plot is much more intuitive compared to single optimisation solution.')
+    st.write('This dashboard introduces a novel optimization method powered by a decision engine, which is significantly faster than traditional optimization approaches. We leveraged all results and points visited by the optimizer to train a decision engine (an ML model). This innovation enables remarkably rapid design optimization (less than 1 second compared to 3 minutes) and generates hundreds of new designs. The output is a Pareto plot that illustrates the trade-off between durability and performance. A Pareto plot offers a more intuitive visualization compared to a single optimization solution..')
 
     col1, col2 = st.columns([1,0.5])
-    col1.write('The model is catboost model, a gradient boosting model and an ensamble model. Rather than interpolating, we are dumping as many data as we can, exceeding the double-descent phenomenon limit to make it in a decision engine.')
+    col1.write('The model is a CatBoost model, which combines gradient boosting and ensemble techniques. Instead of interpolating, we are inputting as much data as possible—surpassing the limit set by the double-descent phenomenon to transform it into a decision engine.')
     col2.image(image4)
     
     st.image(image3)

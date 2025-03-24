@@ -153,3 +153,15 @@ with col34:
     st.write('A tool for training a ML classifier for detecting anomalies in \
              vehicle measurement data.')
     
+
+
+gap,col14,gap,col24,gap,col34,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
+
+
+with col14:
+    if st.button('Open tool', use_container_width=True,key=10):
+        switch_page("Other Ways of Visualising Data")
+    image = read_image("images/Image_10.png")
+    st.image(image)
+    st.subheader('Data Visualisation (Under development)')
+    st.write('A tool for exploring complex and large data for getting useful insights.It helps to find hidden patterns that is useful and intuitive.')
