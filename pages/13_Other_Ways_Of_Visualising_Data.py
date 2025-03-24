@@ -1,24 +1,7 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
-import streamlit as st
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-from datetime import datetime
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-import pandas as pd
-import plotly.express as px
 from PIL import Image
-import plotly
-from plotly.subplots import make_subplots
-from sklearn.neighbors import LocalOutlierFactor 
-import datetime
-from sklearn.neighbors import LocalOutlierFactor
-from numpy import where
-from sklearn.preprocessing import StandardScaler
-import pickle
-
+from streamlit_d3graph import d3graph
+import numpy as np
 
 st.set_page_config(layout="wide")
 
@@ -60,3 +43,19 @@ with st.expander('Introduction',expanded=True):
 
     #image = read_image("images/Page4_tech.png")
     #st.image(image,use_column_width=True)
+
+with st.expander('Knowledge graph',expanded=True):
+    # Initialize
+    d3 = d3graph()
+    # Load karate example
+    adjmat, df = d3.import_example('karate')
+
+    label = df['label'].values
+    node_size = df['degree'].values
+
+    d3.graph(adjmat)
+    d3.set_node_properties(color=df['label'].values)
+    d3.show()
+
+    d3.set_node_properties(label=label, color=label, cmap='Set1')
+    d3.show()
