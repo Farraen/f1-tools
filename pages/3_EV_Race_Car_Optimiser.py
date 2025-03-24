@@ -23,6 +23,7 @@ st.set_page_config(layout="wide")
 
 st.subheader('EV Race Car Simulator and Motor Generative Design')
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
 
 # ----------- Functions --------------------------
     

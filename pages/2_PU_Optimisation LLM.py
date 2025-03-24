@@ -720,6 +720,7 @@ def select_callback():
     
 st_title('PU Decision Engine + AI Race Engineer')
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
 
 with st.expander('Introduction',expanded=True):
     st_text('A virtual environment to demonstrate the ability of Genetic Algorithm (an evolutionary algorithm) to solve PU selection problem. Allows race engineer to quickly restrategise live with new race data and historical decisions. Adapted from Farraen\'s 2018 Matlab GA PU script and converted into Python environment. Results may vary due to to the GA library behaviour. The UI was developed using 2018 season track data.')

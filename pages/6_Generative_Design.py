@@ -115,6 +115,8 @@ def st_text(text):
 # Build dashboard
 st.subheader('Racing Vehicle Optimiser')
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 with st.expander('Introduction', expanded=True):
 
     col1,col2 = st.columns([1,1])

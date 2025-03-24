@@ -51,6 +51,8 @@ def read_image(img_path):
 
 st.subheader("Data Visualisation (under development)")
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 with st.expander('Introduction',expanded=True):
 
     str1 = "A page devoted to exploring various approaches and perspectives on analyzing large or complex datasets, and uncovering the valuable insights they can provide."

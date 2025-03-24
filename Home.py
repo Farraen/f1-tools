@@ -15,7 +15,8 @@ def read_image(img_path):
 
 
 st.subheader("Farraen's experimental racing tools")
-st.header(' ')
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+st.write(' ')
 
 gap_size = 0.05
 gap,col11,gap,col21,gap,col31,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
@@ -159,9 +160,9 @@ gap,col14,gap,col24,gap,col34,gap = st.columns([gap_size,1,gap_size,1,gap_size,1
 
 
 with col14:
-    if st.button('Open tool', use_container_width=True,key=10):
+    if st.button('Open tool', use_container_width=True,key=13):
         switch_page("Other Ways of Visualising Data")
-    image = read_image("images/Image_10.png")
+    image = read_image("images/big_data.png")
     st.image(image)
     st.subheader('Data Visualisation (Under development)')
     st.write('A tool for exploring complex and large data for getting useful insights.It helps to find hidden patterns that is useful and intuitive.')

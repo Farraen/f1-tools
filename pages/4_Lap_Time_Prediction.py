@@ -47,6 +47,9 @@ def read_image(img_path):
 # ----------- UI Section -------------------------
 
 st.subheader('Lap Time Prediction')
+
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 diag_placeholder = st.empty()
 
 @st.cache_resource

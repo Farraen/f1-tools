@@ -198,6 +198,8 @@ def PlotTelemetry(fig2,df,ToPlot,cc,trans,name):
 
 st.subheader("Data Mining and Exploration Tool (Still under development)")
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 with st.expander('Data selection',expanded=True):
 
     col1,col2 = st.columns([0.5,1],gap="medium")

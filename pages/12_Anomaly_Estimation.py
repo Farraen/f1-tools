@@ -251,6 +251,9 @@ def PlotAnomaly(fig2,df,ToPlot,name,t_outliers):
 
 st.subheader("F1 Anomaly Estimator")
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
+
 with st.expander('Introduction',expanded=True):
 
     str1 = "This is a dashboard for extracting Max's race telemetry data and detecting anomalies to identify faults early. It involves a relatively basic anomaly detection process due to the limited amount of telemetry data available. A MongoDB database was set up to store telemetry data for all 2022 and 2023 races. MongoDB is a document-oriented database, and data is stored as JSON documents. The database is connected via an API over the internet to the dashboard. For detecting anomalies, the LOF (Local Outlier Factor) algorithm is used. It is trained using historical telemetry data and is employed to predict new, unseen data."

@@ -11,6 +11,9 @@ import time
 st.set_page_config(layout='wide')
 
 st.subheader('Tire strategy decision engine')
+
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 st.text('A prototype decision engine for tire strategy. Uses genetic algorithm as decision engine to produce solutions for tire change and compount selection.')
 
 if "fitness_tire" not in st.session_state:

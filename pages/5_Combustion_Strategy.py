@@ -173,6 +173,8 @@ def plot_result():
 
 st.subheader('Combustion Optimiser')
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 with st.expander('Introduction', expanded=False):
     st_text('This is a prototype dashboard for parameterising a combustion strategy. \
                 The combustion strategy is a subsystem for sensorless combustion pressure prediction. \

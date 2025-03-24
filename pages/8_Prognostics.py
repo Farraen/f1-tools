@@ -250,6 +250,8 @@ def is_monotonic(arr):
 
 st.subheader("Prognostics")
 
+st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
+
 with st.expander('Data visualisation',expanded=True):
 
     col1, col2 = st.columns([1,1],gap='large')
