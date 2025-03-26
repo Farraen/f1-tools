@@ -240,7 +240,7 @@ with st.expander('Race data to Knowledge Graph',expanded=True):
         add_info_2 = st.text_area("Add extra factors to be included in data insights",key="add_info_2")
         bar2 = st.empty()
 
-
+    st.caption("If it stopped due to error, click Start again.")
     if st.button("Start analysis"):
 
         bar1.progress(0, text="Processing...")
