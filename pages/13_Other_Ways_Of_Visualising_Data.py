@@ -226,7 +226,7 @@ with st.expander('Race data to Knowledge Graph',expanded=True):
         fig_1 = plot_race_data(df_1)
         st.plotly_chart(fig_1, theme="streamlit",height=400)
 
-        add_info_1 = st.text_area("Add extra factors to be included in data insights","Late braking",key="add_info_1")
+        add_info_1 = st.text_area("Add extra factors to be included in data insights","Excessive tire wear, long straights, dry",key="add_info_1")
         bar1 = st.empty()
 
 
@@ -237,7 +237,7 @@ with st.expander('Race data to Knowledge Graph',expanded=True):
         fig_2 = plot_race_data(df_2)
         st.plotly_chart(fig_2, theme="streamlit",height=400)
 
-        add_info_2 = st.text_area("Add extra factors to be included in data insights",key="add_info_2")
+        add_info_2 = st.text_area("Add extra factors to be included in data insights","Light tire wear, long straights, wet",key="add_info_2")
         bar2 = st.empty()
 
     st.caption("If it stopped due to error, click Start again.")
