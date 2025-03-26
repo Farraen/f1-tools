@@ -356,6 +356,7 @@ def UpdatePlots():
     tel = race_dict['Telemetry']
     df = pd.DataFrame(tel)
     df = AddAdditionalTelemetryData(df)
+    #df.to_pickle('telemetry_71.pkl')
 
     fig = PlotTelemetry(fig,df,ToPlot,"deepskyblue",1,f"Lap {lap}")
 
