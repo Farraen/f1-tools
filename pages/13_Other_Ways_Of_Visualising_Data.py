@@ -141,6 +141,23 @@ def send_message(messages):
     
     return openai_response
 
+
+def openai_send_message(messages_dict):
+
+    openai_response = client.chat.completions.create(
+        model=st.session_state["openai_model"],
+        messages=messages_dict,
+        stream=True)
+    
+    full_response = ""
+    for response in openai_response:
+        full_response += (response.choices[0].delta.content or "")
+    
+    json_str = full_response.strip("```json").strip()
+
+    return json_str
+
+
 def analyse(json_1,add_info, bar):
     bar.progress(0, text="Processing...")
 
@@ -153,32 +170,55 @@ def analyse(json_1,add_info, bar):
     messages = [{"role": "user", "content": str1}]
     persona = [{"role":"system", "content":"You are a racing car engineer"}]
     persona.extend(messages)
+    messages_dict = [{"role": m["role"], "content": m["content"]} for m in persona]
+    
+
     bar.progress(5, text="Processing...")
 
+    # Example loop to check JSON validity
+    attempt = 0
+    max_attempts = 5
+    
 
-    openai_response = client.chat.completions.create(
-        model=st.session_state["openai_model"],
-        messages=[{"role": m["role"], "content": m["content"]} for m in persona],
-        stream=True)
-    
-    bar.progress(50, text="Processing...")
-
-    full_response = ""
-    for response in openai_response:
-        full_response += (response.choices[0].delta.content or "")
-    
-    cleaned_string = full_response.strip("```json").strip()
-    json_dict = json.loads(cleaned_string)
-    
-    modes = json_dict["modes"]
-    observations = json_dict["observations"]
-    nodes = json_dict["nodes"]
-    adj_matrix = json_dict["adj_matrix"]
+    valid = False
+    n_error = 0
+    while attempt < max_attempts:
+        attempt += 1
+        
+        json_string = openai_send_message(messages_dict)
+        
+        # Check if it's valid
+        if is_valid_json(json_string):
+            valid = True
+            break  # Exit loop if valid
+        else:
+            n_error = n_error+1
+    if n_error>0:
+        st.write(f'Repeated {n_error} time(s) due to error.')
 
     bar.progress(70, text="Processing...")
+    if valid:
+        json_dict = json.loads(json_string)
+        modes = json_dict["modes"]
+        observations = json_dict["observations"]
+        nodes = json_dict["nodes"]
+        adj_matrix = json_dict["adj_matrix"]
+    else:
+        modes = []
+        observations = []
+        nodes = []
+        adj_matrix = []
 
 
-    return modes, observations, nodes, adj_matrix
+    return modes, observations, nodes, adj_matrix 
+
+
+def is_valid_json(json_string):
+    try:
+        json.loads(json_string)  # Attempt to parse the JSON
+        return True
+    except json.JSONDecodeError:
+        return False
 
 
 @st.cache_data
@@ -251,24 +291,28 @@ with st.expander('Race data to Knowledge Graph',expanded=True):
 
         col1,col2 = st.columns([1,1])
         with col1:
-            bar1.progress(80, text="Plotting...")
-            df_matrix = pd.DataFrame(adj_matrix_1, columns=nodes_1, index=nodes_1)
-            d3 = d3graph()
-            d3.graph(df_matrix)
-            d3.show(figsize=(400, 500))
-            bar1.progress(100, text="Done for analysis 1")
-            time.sleep(1)
+            if adj_matrix_1 != []:
+                bar1.progress(80, text="Plotting...")
+                df_matrix = pd.DataFrame(adj_matrix_1, columns=nodes_1, index=nodes_1)
+                d3 = d3graph()
+                d3.graph(df_matrix)
+                d3.show(figsize=(400, 500))
+                bar1.progress(100, text="Done for analysis 1")
+                time.sleep(1)
+
             bar1.empty()
 
 
         with col2:
-            bar2.progress(80, text="Plotting...")
-            df_matrix = pd.DataFrame(adj_matrix_2, columns=nodes_2, index=nodes_2)
-            d3 = d3graph()
-            d3.graph(df_matrix)
-            d3.show(figsize=(400, 500))
-            bar2.progress(100, text="Done for analysis 2")
-            time.sleep(1)
+            if adj_matrix_2 != []:
+                bar2.progress(80, text="Plotting...")
+                df_matrix = pd.DataFrame(adj_matrix_2, columns=nodes_2, index=nodes_2)
+                d3 = d3graph()
+                d3.graph(df_matrix)
+                d3.show(figsize=(400, 500))
+                bar2.progress(100, text="Done for analysis 2")
+                time.sleep(1)
+            
             bar2.empty()
 
 

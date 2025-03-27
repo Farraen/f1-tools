@@ -164,5 +164,5 @@ with col14:
         switch_page("Other Ways of Visualising Data")
     image = read_image("images/big_data.png")
     st.image(image)
-    st.subheader('Data Visualisation (Under development)')
-    st.write('A tool for exploring complex and large data for getting useful insights.It helps to find hidden patterns that is useful and intuitive.')
+    st.subheader('Data Visualisation')
+    st.write('A page dedicated for new ways of exploring complex and large data, and getting useful insights.It helps to find hidden patterns and relationships in more intuitive manner. For a start, I have combined time-series segmentation, prompt engineerng and knowledge graph to quickly visualise factors affecting a lap time. It is still work in progress but enough as proof of concept.')
