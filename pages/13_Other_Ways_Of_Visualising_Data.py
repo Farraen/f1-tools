@@ -230,14 +230,24 @@ def load_images_once():
 image1 = load_images_once()
 
 
+
+
+
 st.subheader("Advanced Data Visualisation")
 
 st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
 
 with st.expander('Introduction',expanded=True):
 
+
     str1 = "A page devoted to exploring various approaches and perspectives on analyzing large or complex datasets, and uncovering the valuable insights they can provide."
     st.write(str1)
+
+
+    pg_num =  st.slider('Slide number',1,4)
+    image = read_image(f"images/nx_{pg_num}.png")
+    st.image(image,use_column_width=True)
+
 
     #image = read_image("images/Page4_tech.png")
     #st.image(image,use_column_width=True)
