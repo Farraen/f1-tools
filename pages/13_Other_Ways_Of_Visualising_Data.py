@@ -10,8 +10,19 @@ from openai import OpenAI
 import time
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
 
+
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 if "openai_model" not in st.session_state:
     #st.session_state["openai_model"] = "gpt-3.5-turbo"
