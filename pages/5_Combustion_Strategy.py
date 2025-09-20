@@ -18,7 +18,20 @@ import os
 from fmpy import simulate_fmu, read_model_description, extract
 import fmpy as fm
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
+
+
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 
 st.markdown("""
 <style>

@@ -8,7 +8,20 @@ import plotly.express as px
 import plotly.graph_objects as go
 import time
 
-st.set_page_config(layout='wide')
+st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
+
+
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 
 st.subheader('Tire strategy decision engine')
 
