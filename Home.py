@@ -7,17 +7,6 @@ from streamlit_extras.switch_page_button import switch_page
 st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
 
 
-st.markdown(
-    """
-<style>
-    [data-testid="collapsedControl"] {
-        display: none
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
 
 
 # For loading images
@@ -180,3 +169,13 @@ with col14:
     st.image(image)
     st.subheader('Data Visualisation')
     st.write('A page dedicated for new ways of exploring complex and large data, and getting useful insights.It helps to find hidden patterns and relationships in more intuitive manner. For a start, I have combined time-series segmentation, prompt engineerng and knowledge graph to quickly visualise factors affecting a lap time. It is still work in progress but enough as proof of concept.')
+
+
+with col24:
+    if st.button('Open tool', use_container_width=True,key=14):
+        switch_page("Multi Task GP")
+    image = read_image("images/mtgp_1.png")
+    st.image(image)
+    st.subheader('Multi Task GP Model')
+    st.write(' This an app example to use Multi-task GP framework to train a GP model from another GP model. ' \
+    'The problem that we want to solve is how we can built a statistical model out of sparse training data and use historical engine data from a similar engine.')
