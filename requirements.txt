@@ -12,8 +12,8 @@ pandas-dq==1.28
 pandas-profiling
 plotly==5.17.0
 plotly-resampler==0.9.1
-pyro-ppl>=1.8.0
-torch>=2.0.0
+pyro-ppl==1.8.0
+torch==2.0.0
 pymongo==4.6.1
 scikit-base==0.5.1
 scikit-image==0.21.0
