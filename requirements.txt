@@ -71,7 +71,7 @@ orjson==3.9.10
 packaging==21.3
 pandas-dq==1.28
 pandas-profiling==3.6.6
-pandas==1.5.3
+pandas==2.0.0
 patsy==0.5.5
 phik==0.12.3
 pillow==10.0.1
@@ -99,7 +99,7 @@ rpds-py==0.16.2
 scikit-base==0.5.1
 scikit-image==0.21.0
 scikit-learn-intelex==2023.2.1
-scikit-learn==1.2.2
+scikit-learn==1.6.1
 scikit-optimize==0.9.0
 scikit-plot==0.3.7
 seaborn==0.12.2
@@ -128,6 +128,7 @@ tifffile==2023.12.9
 toml==0.10.2
 tornado==6.4
 tqdm==4.66.1
+toolz==1.0.0
 trace-updater==0.0.9.1
 traitlets==5.14.1
 tsdownsample==0.1.2
@@ -137,3 +138,10 @@ visions==0.7.5
 werkzeug==2.1.2
 wordcloud==1.9.3
 ydata-profiling==4.6.3
+antlr4-python3-runtime==4.9.3
+htmlmin==0.1.12
+omegaconf==2.3.0
+password-strength==0.0.3.post2
+sseclient-py==1.8.0
+tabpfn-client==0.1.10
+xxhash==3.5.0
