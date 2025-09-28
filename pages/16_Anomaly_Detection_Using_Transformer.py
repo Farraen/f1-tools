@@ -138,4 +138,4 @@ if st.session_state.plot is None:
 else:
     st.session_state.plot_handle.   plotly_chart(st.session_state.plot)
 
-time.sleep(0.01)
+time.sleep(0.02)
