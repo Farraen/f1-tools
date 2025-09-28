@@ -188,3 +188,16 @@ with col34:
     st.subheader('Stochastic Variational Inference')
     st.write(' This an app example to use Multi-task GP framework to train a GP model from another GP model. ' \
     'The problem that we want to solve is how we can built a statistical model out of sparse training data and use historical engine data from a similar engine.')
+
+
+gap,col14,gap,col24,gap,col34,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
+
+
+with col14:
+    if st.button('Open tool', use_container_width=True,key=16):
+        switch_page("Anomaly Detection Using Transformer")
+    image = read_image("images/big_data.png")
+    st.image(image)
+    st.subheader('Anomaly Detection Using Transformer')
+    st.write('A page dedicated for new ways of exploring complex and large data, and getting useful insights.It helps to find hidden patterns and relationships in more intuitive manner. For a start, I have combined time-series segmentation, prompt engineerng and knowledge graph to quickly visualise factors affecting a lap time. It is still work in progress but enough as proof of concept.')
+
