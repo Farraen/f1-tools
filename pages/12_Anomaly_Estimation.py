@@ -452,7 +452,6 @@ def GetAnomalies(df):
     ypred = model.predict(X_test_scaled)
     outlier_index = where(ypred==-1)
     t_outliers = t_test[outlier_index]
-
     return t_outliers
 
 def UpdatePlots(df_select):
@@ -540,12 +539,12 @@ if train_button:
         model = LocalOutlierFactor(novelty=True)
         model.fit(X_train_scaled)
 
-        #filename = 'model.sav'
-        #pickle.dump(model, open(filename, 'wb'))
+        filename = 'data/Page4_model.sav'
+        pickle.dump(model, open(filename, 'wb'))
         st.session_state.model_anomaly = model
 
-        #filename = 'scaler.sav'
-        #pickle.dump(scaler, open(filename, 'wb'))
+        filename = 'data/Page4_scaler.sav'
+        pickle.dump(scaler, open(filename, 'wb'))
         st.session_state.scaler = scaler
 
         fig = UpdatePlots(df_select)
