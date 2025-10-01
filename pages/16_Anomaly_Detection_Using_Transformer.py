@@ -198,7 +198,7 @@ next_race_dict = dbcol.find_one({"LapNumber": next_lap})
 if next_race_dict:
     next_tel = next_race_dict['Telemetry']
     df_next = pd.DataFrame(next_tel)
-else:
+    else:
     df_next = None
     st.warning(f"Next lap ({next_lap}) data not available")
 
@@ -212,7 +212,7 @@ with st.expander('Introduction',expanded=True):
 with st.expander('Testing',expanded=True):
     # Training split control
     col0 , col1,col2 = st.columns([0.05,1,0.18])
-    with col1:
+with col1:
         st.header("Training Configuration")
         training_split = st.slider(
             "Training Data Percentage", 
@@ -256,26 +256,41 @@ with st.expander('Testing',expanded=True):
         # Method 1: Set environment variable
         os.environ['TABPFN_ACCESS_TOKEN'] = token
         
-        # Method 2: Create config file
-        config_dir = os.path.expanduser("~/.tabpfn")
-        os.makedirs(config_dir, exist_ok=True)
-        config_file = os.path.join(config_dir, "config.json")
+        # Method 2: Create config file in temp directory (safer for cloud)
+        try:
+            # Use temp directory instead of home directory for cloud compatibility
+            temp_dir = tempfile.mkdtemp(prefix='tabpfn_')
+            config_file = os.path.join(temp_dir, "config.json")
+            
+            config = {
+                "access_token": token,
+                "cache_dir": os.path.join(temp_dir, "cache")
+            }
+            
+            # Create cache directory
+            os.makedirs(config["cache_dir"], exist_ok=True)
+            
+            with open(config_file, 'w') as f:
+                json.dump(config, f)
+            
+            st.info(f"✅ TabPFN config created at {config_file}")
+            
+            # Set additional environment variables for temp directory
+            os.environ['TABPFN_CACHE_DIR'] = config["cache_dir"]
+            os.environ['TABPFN_CONFIG_DIR'] = temp_dir
+            
+        except Exception as config_error:
+            st.warning(f"⚠️ Config file creation failed: {str(config_error)}")
+            st.info("Continuing with environment variables only...")
         
-        config = {
-            "access_token": token,
-            "cache_dir": tempfile.mkdtemp(prefix='tabpfn_cache_')
-        }
-        
-        with open(config_file, 'w') as f:
-            json.dump(config, f)
-        
-        st.info(f"✅ TabPFN config created at {config_file}")
-        
-        # Method 3: Try to authenticate directly
+        # Method 3: Try to authenticate directly (skip if permission issues)
         try:
             # Try to authenticate with the token
             tabpfn_client.set_access_token(token)
             st.info("✅ TabPFN authenticated with token")
+        except PermissionError as perm_error:
+            st.warning(f"⚠️ Permission denied for direct authentication: {str(perm_error)}")
+            st.info("Skipping direct authentication, using environment variables...")
         except Exception as auth_error:
             st.warning(f"⚠️ Direct authentication failed: {str(auth_error)}")
             st.info("Trying with environment variable...")
@@ -286,7 +301,26 @@ with st.expander('Testing',expanded=True):
         
         # Create TabPFN model with error handling
         try:
+            # Try creating model with minimal configuration
             st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+            st.success("✅ TabPFN model created successfully")
+        except PermissionError as perm_error:
+            st.warning(f"⚠️ Permission error during model creation: {str(perm_error)}")
+            st.info("Trying cloud-friendly approach...")
+            
+            # Try with minimal file system access
+            try:
+                # Disable any file operations that might cause permission issues
+                import tempfile
+                temp_dir = tempfile.mkdtemp()
+                os.environ['TABPFN_CACHE_DIR'] = temp_dir
+                os.environ['TABPFN_DISABLE_CACHE'] = 'true'
+                
+                st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+                st.success("✅ TabPFN model created successfully (cloud-friendly)")
+            except Exception as cloud_error:
+                st.error(f"❌ Cloud-friendly approach failed: {str(cloud_error)}")
+                st.session_state.tabpfn_model = None
         except Exception as model_error:
             st.error(f"❌ Model creation failed: {str(model_error)}")
             # Try alternative approach - maybe the token needs to be set differently
@@ -302,8 +336,6 @@ with st.expander('Testing',expanded=True):
             except Exception as final_error:
                 st.error(f"❌ Final attempt failed: {str(final_error)}")
                 st.session_state.tabpfn_model = None
-        else:
-            st.success("✅ TabPFN model created successfully")
     except Exception as e:
         st.error(f"❌ Failed to create TabPFN model: {str(e)}")
         st.session_state.tabpfn_model = None
