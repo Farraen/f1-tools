@@ -249,13 +249,61 @@ with st.expander('Testing',expanded=True):
 
     # Create TabPFN model with explicit token configuration
     try:
-        # Ensure token is set before creating the model
+        # Set up TabPFN authentication
+        import tabpfn_client
+        import json
+        
+        # Method 1: Set environment variable
         os.environ['TABPFN_ACCESS_TOKEN'] = token
         
-        # Create TabPFN model
-        st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+        # Method 2: Create config file
+        config_dir = os.path.expanduser("~/.tabpfn")
+        os.makedirs(config_dir, exist_ok=True)
+        config_file = os.path.join(config_dir, "config.json")
         
-        st.success("✅ TabPFN model created successfully")
+        config = {
+            "access_token": token,
+            "cache_dir": tempfile.mkdtemp(prefix='tabpfn_cache_')
+        }
+        
+        with open(config_file, 'w') as f:
+            json.dump(config, f)
+        
+        st.info(f"✅ TabPFN config created at {config_file}")
+        
+        # Method 3: Try to authenticate directly
+        try:
+            # Try to authenticate with the token
+            tabpfn_client.set_access_token(token)
+            st.info("✅ TabPFN authenticated with token")
+        except Exception as auth_error:
+            st.warning(f"⚠️ Direct authentication failed: {str(auth_error)}")
+            st.info("Trying with environment variable...")
+        
+        # Debug: Check what TabPFN is looking for
+        st.info(f"Environment TABPFN_ACCESS_TOKEN: {'SET' if 'TABPFN_ACCESS_TOKEN' in os.environ else 'NOT SET'}")
+        st.info(f"Token length: {len(token)}")
+        
+        # Create TabPFN model with error handling
+        try:
+            st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+        except Exception as model_error:
+            st.error(f"❌ Model creation failed: {str(model_error)}")
+            # Try alternative approach - maybe the token needs to be set differently
+            st.info("Trying alternative authentication...")
+            
+            # Set token in multiple ways
+            os.environ['TABPFN_TOKEN'] = token
+            os.environ['TABPFN_API_KEY'] = token
+            
+            try:
+                st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+                st.success("✅ TabPFN model created successfully (alternative method)")
+            except Exception as final_error:
+                st.error(f"❌ Final attempt failed: {str(final_error)}")
+                st.session_state.tabpfn_model = None
+        else:
+            st.success("✅ TabPFN model created successfully")
     except Exception as e:
         st.error(f"❌ Failed to create TabPFN model: {str(e)}")
         st.session_state.tabpfn_model = None
