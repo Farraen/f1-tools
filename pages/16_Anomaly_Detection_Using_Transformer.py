@@ -266,7 +266,7 @@ with st.expander('Testing',expanded=True):
         st.success("✅ TabPFN model fitted successfully")
     else:
         st.error("❌ Cannot fit model - TabPFN model creation failed")
-        return
+        
 
     # Calculate quantiles for confidence interval
     alpha = (100 - confidence_level) / 100
