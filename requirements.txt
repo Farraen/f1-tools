@@ -130,7 +130,7 @@ streamlit-mic-recorder==0.0.4
 streamlit-toggle-switch==1.0.2
 streamlit-vertical-slider==2.5.5
 streamlit==1.35.0
-tabpfn-client==0.1.10
+# tabpfn-client==0.1.10  # Replaced with custom cloud-friendly implementation
 tangled-up-in-unicode==0.2.0
 tbb==2021.10.0
 threadpoolctl==3.2.0

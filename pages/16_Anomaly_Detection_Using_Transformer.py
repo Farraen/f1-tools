@@ -6,7 +6,6 @@ import numpy as np
 import tempfile
 from pathlib import Path
 import pandas as pd
-import tabpfn_client
 import time
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
@@ -15,6 +14,12 @@ import plotly.express as px
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from PIL import Image
+
+# Import custom TabPFN client for cloud deployment
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from custom_tabpfn_client import TabPFNRegressor, set_access_token
 
 
 st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
@@ -247,95 +252,18 @@ y_test = df_test['RPM']
 
 
 
-# Create TabPFN model with explicit token configuration
+# Create custom TabPFN model for cloud deployment
 try:
-    # Set up TabPFN authentication
-    import tabpfn_client
-    import json
-    
-    # Method 1: Set environment variable
+    # Set up authentication
     os.environ['TABPFN_ACCESS_TOKEN'] = token
+    set_access_token(token)
     
-    # Method 2: Create config file in temp directory (safer for cloud)
-    try:
-        # Use temp directory instead of home directory for cloud compatibility
-        temp_dir = tempfile.mkdtemp(prefix='tabpfn_')
-        config_file = os.path.join(temp_dir, "config.json")
-        
-        config = {
-            "access_token": token,
-            "cache_dir": os.path.join(temp_dir, "cache")
-        }
-        
-        # Create cache directory
-        os.makedirs(config["cache_dir"], exist_ok=True)
-        
-        with open(config_file, 'w') as f:
-            json.dump(config, f)
-        
-        st.info(f"✅ TabPFN config created at {config_file}")
-        
-        # Set additional environment variables for temp directory
-        os.environ['TABPFN_CACHE_DIR'] = config["cache_dir"]
-        os.environ['TABPFN_CONFIG_DIR'] = temp_dir
-        
-    except Exception as config_error:
-        st.warning(f"⚠️ Config file creation failed: {str(config_error)}")
-        st.info("Continuing with environment variables only...")
+    # Create custom TabPFN model
+    st.session_state.tabpfn_model = TabPFNRegressor(access_token=token)
     
-    # Method 3: Try to authenticate directly (skip if permission issues)
-    try:
-        # Try to authenticate with the token
-        tabpfn_client.set_access_token(token)
-        st.info("✅ TabPFN authenticated with token")
-    except PermissionError as perm_error:
-        st.warning(f"⚠️ Permission denied for direct authentication: {str(perm_error)}")
-        st.info("Skipping direct authentication, using environment variables...")
-    except Exception as auth_error:
-        st.warning(f"⚠️ Direct authentication failed: {str(auth_error)}")
-        st.info("Trying with environment variable...")
+    st.success("✅ Custom TabPFN model created successfully")
+    st.info("Using cloud-friendly TabPFN implementation")
     
-    # Debug: Check what TabPFN is looking for
-    st.info(f"Environment TABPFN_ACCESS_TOKEN: {'SET' if 'TABPFN_ACCESS_TOKEN' in os.environ else 'NOT SET'}")
-    st.info(f"Token length: {len(token)}")
-    
-    # Create TabPFN model with error handling
-    try:
-        # Try creating model with minimal configuration
-        st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
-        st.success("✅ TabPFN model created successfully")
-    except PermissionError as perm_error:
-        st.warning(f"⚠️ Permission error during model creation: {str(perm_error)}")
-        st.info("Trying cloud-friendly approach...")
-        
-        # Try with minimal file system access
-        try:
-            # Disable any file operations that might cause permission issues
-            import tempfile
-            temp_dir = tempfile.mkdtemp()
-            os.environ['TABPFN_CACHE_DIR'] = temp_dir
-            os.environ['TABPFN_DISABLE_CACHE'] = 'true'
-            
-            st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
-            st.success("✅ TabPFN model created successfully (cloud-friendly)")
-        except Exception as cloud_error:
-            st.error(f"❌ Cloud-friendly approach failed: {str(cloud_error)}")
-            st.session_state.tabpfn_model = None
-    except Exception as model_error:
-        st.error(f"❌ Model creation failed: {str(model_error)}")
-        # Try alternative approach - maybe the token needs to be set differently
-        st.info("Trying alternative authentication...")
-        
-        # Set token in multiple ways
-        os.environ['TABPFN_TOKEN'] = token
-        os.environ['TABPFN_API_KEY'] = token
-        
-        try:
-            st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
-            st.success("✅ TabPFN model created successfully (alternative method)")
-        except Exception as final_error:
-            st.error(f"❌ Final attempt failed: {str(final_error)}")
-            st.session_state.tabpfn_model = None
 except Exception as e:
     st.error(f"❌ Failed to create TabPFN model: {str(e)}")
     st.session_state.tabpfn_model = None
