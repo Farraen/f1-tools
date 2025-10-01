@@ -24,6 +24,9 @@ st.title("Anomaly Detection using Transformer")
 
 token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMjJhMDA0ZTctYWVmOS00MWZkLWExYTAtNzczZTgzYTFjNWU4IiwiZXhwIjoxNzkwNTYxOTQyfQ.FkeXhyUZTRsqM3vr-cUa9Etq6UmIOmBPQ48NSfyNF_k"
 
+# Set TabPFN token as environment variable immediately
+os.environ['TABPFN_ACCESS_TOKEN'] = token
+
 
 # MongoDB
 @st.cache_resource 
@@ -75,9 +78,15 @@ def setup_tabpfn_for_cloud():
     # Create a temporary directory for caching
     temp_cache_dir = tempfile.mkdtemp(prefix='tabpfn_')
     
-    # Set environment variables
+    # Ensure environment variables are set
     os.environ['TABPFN_ACCESS_TOKEN'] = token
     os.environ['TABPFN_CACHE_DIR'] = temp_cache_dir
+    
+    # Debug: Check if token is properly set
+    if 'TABPFN_ACCESS_TOKEN' in os.environ:
+        st.info(f"✅ TabPFN token set successfully (length: {len(os.environ['TABPFN_ACCESS_TOKEN'])})")
+    else:
+        st.error("❌ TabPFN token not found in environment variables")
     
     # Patch the problematic methods
     try:
@@ -238,11 +247,26 @@ with st.expander('Testing',expanded=True):
 
 
 
-    # Create TabPFN model
-    st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+    # Create TabPFN model with explicit token configuration
+    try:
+        # Ensure token is set before creating the model
+        os.environ['TABPFN_ACCESS_TOKEN'] = token
+        
+        # Create TabPFN model
+        st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+        
+        st.success("✅ TabPFN model created successfully")
+    except Exception as e:
+        st.error(f"❌ Failed to create TabPFN model: {str(e)}")
+        st.session_state.tabpfn_model = None
 
     # Fit the model on training data only
-    st.session_state.tabpfn_model.fit(x_train, y_train)
+    if st.session_state.tabpfn_model is not None:
+        st.session_state.tabpfn_model.fit(x_train, y_train)
+        st.success("✅ TabPFN model fitted successfully")
+    else:
+        st.error("❌ Cannot fit model - TabPFN model creation failed")
+        return
 
     # Calculate quantiles for confidence interval
     alpha = (100 - confidence_level) / 100
