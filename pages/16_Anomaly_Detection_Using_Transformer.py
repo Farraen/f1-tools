@@ -160,6 +160,41 @@ def load_analysis_state(filename):
         st.error(f"Failed to load state: {str(e)}")
         return None
 
+def find_latest_saved_state():
+    """Find the most recent saved state file"""
+    try:
+        import glob
+        # Look for anomaly_analysis_*.json files
+        state_files = glob.glob("anomaly_analysis_*.json")
+        
+        if not state_files:
+            return None
+        
+        # Sort by modification time, most recent first
+        state_files.sort(key=os.path.getmtime, reverse=True)
+        return state_files[0]
+        
+    except Exception as e:
+        return None
+
+def auto_load_saved_state():
+    """Automatically load the most recent saved state"""
+    if st.session_state.auto_load_attempted:
+        return False
+    
+    st.session_state.auto_load_attempted = True
+    
+    latest_file = find_latest_saved_state()
+    if latest_file:
+        st.info(f"📂 Found saved analysis: `{latest_file}`")
+        state_data = load_analysis_state(latest_file)
+        if state_data:
+            st.success(f"✅ Auto-loaded analysis from {state_data.get('timestamp', 'unknown time')}")
+            st.warning("⚠️ Running in **OFFLINE MODE** - Using saved predictions")
+            return True
+    
+    return False
+
 
 def setup_tabpfn_for_cloud():
     """Setup TabPFN to work in cloud environments by patching file operations"""
@@ -251,6 +286,12 @@ if 'lap' not in st.session_state:
 if 'selected_anomalies' not in st.session_state:
     st.session_state.selected_anomalies = []
 
+if 'auto_load_attempted' not in st.session_state:
+    st.session_state.auto_load_attempted = False
+
+if 'deployment_mode' not in st.session_state:
+    st.session_state.deployment_mode = False
+
 # For loading images
 @st.cache_resource
 def read_image(img_path):
@@ -286,6 +327,27 @@ else:
     st.warning(f"Next lap ({next_lap}) data not available")
 
 
+# Check for deployment mode or TabPFN availability
+deployment_mode_detected = False
+try:
+    # Try a quick TabPFN import to see if it's available
+    import tabpfn_client
+    # If we get here, TabPFN is available but might fail to connect
+    deployment_mode_detected = False
+except Exception:
+    deployment_mode_detected = True
+    st.session_state.deployment_mode = True
+
+# Display deployment mode banner
+if deployment_mode_detected or st.session_state.deployment_mode:
+    st.info("🌐 **Deployment Mode Detected** - TabPFN may not be available. The dashboard will automatically load saved analysis states.")
+    
+    # Try to auto-load if not already done
+    if not st.session_state.auto_load_attempted and 'y_predicted' not in st.session_state:
+        auto_loaded = auto_load_saved_state()
+        if auto_loaded:
+            st.success("✅ Successfully loaded saved analysis state!")
+
 with st.expander('Introduction',expanded=True):
     st.write("")
     
@@ -295,6 +357,11 @@ with st.expander('Introduction',expanded=True):
 with st.expander('Testing',expanded=True):
     # Save/Load Controls
     st.subheader("Save/Load Analysis State")
+    
+    # Show helpful reminder
+    if st.session_state.deployment_mode or 'y_predicted' in st.session_state:
+        st.info("💡 **Tip:** Save your analysis to use it later when TabPFN is unavailable. Saved files auto-load on deployment!")
+    
     col_save, col_load = st.columns([1, 1])
     
     with col_save:
@@ -396,14 +463,27 @@ with col1:
             
             tabpfn_success = True
             st.success("✅ TabPFN model trained successfully!")
+            st.info("💾 **Don't forget to save** your analysis using the 'Save Current Analysis' button for offline use!")
             
         except Exception as e:
             st.error(f"❌ TabPFN failed: {str(e)}")
-            st.warning("🔄 Using fallback mode - please load a saved analysis state")
+            st.warning("🔄 Using fallback mode - Attempting to load saved analysis state...")
             
-            # Check if we have saved state to load
+            # Try to auto-load saved state
             if 'y_predicted' not in st.session_state:
-                st.info("💡 Tip: Use 'Load Analysis State' above to restore a previous analysis")
+                auto_loaded = auto_load_saved_state()
+                
+                if not auto_loaded:
+                    st.info("💡 **No saved state found.** You can:")
+                    st.markdown("""
+                    - Upload a saved analysis file using the 'Load Analysis State' button above
+                    - Run the analysis when TabPFN is available and save the state for future use
+                    - Check if there are any `anomaly_analysis_*.json` files in the working directory
+                    """)
+                    st.session_state.tabpfn_model = None
+                else:
+                    st.info("✨ Dashboard is now running with previously saved predictions")
+            else:
                 st.session_state.tabpfn_model = None
         
 
