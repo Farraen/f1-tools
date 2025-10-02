@@ -84,8 +84,6 @@ pillow==10.0.1
 plotly-resampler==0.9.1
 plotly==5.17.0
 protobuf==4.25.1
-pyro-api==0.1.2
-pyro-ppl==1.9.1
 pyaml==23.12.0
 pyarrow==14.0.2
 pydantic-core==2.14.6
@@ -130,11 +128,10 @@ streamlit-mic-recorder==0.0.4
 streamlit-toggle-switch==1.0.2
 streamlit-vertical-slider==2.5.5
 streamlit==1.35.0
-# tabpfn-client==0.1.10  # Replaced with custom cloud-friendly implementation
+tabpfn-client==0.1.10
 tangled-up-in-unicode==0.2.0
 tbb==2021.10.0
 threadpoolctl==3.2.0
-torch==2.2.0
 tifffile==2023.12.9
 toml==0.10.2
 toolz==1.0.0

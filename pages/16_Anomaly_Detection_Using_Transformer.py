@@ -6,6 +6,7 @@ import numpy as np
 import tempfile
 from pathlib import Path
 import pandas as pd
+import tabpfn_client
 import time
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
@@ -14,12 +15,9 @@ import plotly.express as px
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from PIL import Image
-
-# Import custom TabPFN client for cloud deployment
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from custom_tabpfn_client import TabPFNRegressor, set_access_token
+import pickle
+import json
+from datetime import datetime
 
 
 st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
@@ -28,9 +26,6 @@ st.set_page_config(layout="wide",initial_sidebar_state="collapsed")
 st.title("Anomaly Detection using Transformer")
 
 token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMjJhMDA0ZTctYWVmOS00MWZkLWExYTAtNzczZTgzYTFjNWU4IiwiZXhwIjoxNzkwNTYxOTQyfQ.FkeXhyUZTRsqM3vr-cUa9Etq6UmIOmBPQ48NSfyNF_k"
-
-# Set TabPFN token as environment variable immediately
-os.environ['TABPFN_ACCESS_TOKEN'] = token
 
 
 # MongoDB
@@ -76,6 +71,95 @@ def GetRaceData(year,race,lap):
 
     return df
 
+# Save/Load State Functions
+def save_analysis_state(filename_prefix="anomaly_analysis"):
+    """Save current analysis state to files"""
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Prepare state data
+        state_data = {
+            'timestamp': timestamp,
+            'year': st.session_state.year,
+            'race': st.session_state.race,
+            'lap': st.session_state.lap,
+            'training_split': training_split if 'training_split' in locals() else 75,
+            'anomaly_threshold': anomaly_threshold if 'anomaly_threshold' in locals() else 3.5,
+            'confidence_level': confidence_level if 'confidence_level' in locals() else 80,
+            'x_features': x_features if 'x_features' in locals() else ['Speed','nGear','Throttle','RelativeDistance']
+        }
+        
+        # Save session state data if available
+        if 'y_predicted' in st.session_state:
+            state_data.update({
+                'df_test': st.session_state.df_test.to_dict('records'),
+                'y_predicted': st.session_state.y_predicted.tolist(),
+                'y_test': st.session_state.y_test.tolist(),
+                'y_lower': st.session_state.y_lower.tolist(),
+                'y_upper': st.session_state.y_upper.tolist(),
+                'confidence_level': st.session_state.confidence_level
+            })
+        
+        # Save next lap data if available
+        if df_next is not None and 'y_predicted' in st.session_state:
+            state_data.update({
+                'df_next': df_next.to_dict('records'),
+                'y_next_predicted': y_next_predicted.tolist(),
+                'y_next_full': y_next_full.tolist(),
+                'prediction_errors': prediction_errors.tolist(),
+                'anomaly_scores': anomaly_scores.tolist(),
+                'anomaly_indices': anomaly_indices.tolist(),
+                'selected_anomalies': st.session_state.selected_anomalies
+            })
+        
+        # Save to JSON file
+        filename = f"{filename_prefix}_{timestamp}.json"
+        with open(filename, 'w') as f:
+            json.dump(state_data, f, indent=2)
+        
+        return filename, state_data
+        
+    except Exception as e:
+        st.error(f"Failed to save state: {str(e)}")
+        return None, None
+
+def load_analysis_state(filename):
+    """Load analysis state from file"""
+    try:
+        with open(filename, 'r') as f:
+            state_data = json.load(f)
+        
+        # Restore basic parameters
+        st.session_state.year = state_data.get('year', 2023)
+        st.session_state.race = state_data.get('race', 6)
+        st.session_state.lap = state_data.get('lap', 51)
+        
+        # Restore analysis results
+        if 'df_test' in state_data:
+            st.session_state.df_test = pd.DataFrame(state_data['df_test'])
+            st.session_state.y_predicted = np.array(state_data['y_predicted'])
+            st.session_state.y_test = np.array(state_data['y_test'])
+            st.session_state.y_lower = np.array(state_data['y_lower'])
+            st.session_state.y_upper = np.array(state_data['y_upper'])
+            st.session_state.confidence_level = state_data['confidence_level']
+        
+        # Restore next lap data
+        if 'df_next' in state_data:
+            global df_next, y_next_predicted, y_next_full, prediction_errors, anomaly_scores, anomaly_indices
+            df_next = pd.DataFrame(state_data['df_next'])
+            y_next_predicted = np.array(state_data['y_next_predicted'])
+            y_next_full = np.array(state_data['y_next_full'])
+            prediction_errors = np.array(state_data['prediction_errors'])
+            anomaly_scores = np.array(state_data['anomaly_scores'])
+            anomaly_indices = np.array(state_data['anomaly_indices'])
+            st.session_state.selected_anomalies = state_data.get('selected_anomalies', [])
+        
+        return state_data
+        
+    except Exception as e:
+        st.error(f"Failed to load state: {str(e)}")
+        return None
+
 
 def setup_tabpfn_for_cloud():
     """Setup TabPFN to work in cloud environments by patching file operations"""
@@ -83,15 +167,9 @@ def setup_tabpfn_for_cloud():
     # Create a temporary directory for caching
     temp_cache_dir = tempfile.mkdtemp(prefix='tabpfn_')
     
-    # Ensure environment variables are set
+    # Set environment variables
     os.environ['TABPFN_ACCESS_TOKEN'] = token
     os.environ['TABPFN_CACHE_DIR'] = temp_cache_dir
-    
-    # Debug: Check if token is properly set
-    if 'TABPFN_ACCESS_TOKEN' in os.environ:
-        st.info(f"✅ TabPFN token set successfully (length: {len(os.environ['TABPFN_ACCESS_TOKEN'])})")
-    else:
-        st.error("❌ TabPFN token not found in environment variables")
     
     # Patch the problematic methods
     try:
@@ -215,6 +293,45 @@ with st.expander('Introduction',expanded=True):
     st.image(image,use_column_width=True)
 
 with st.expander('Testing',expanded=True):
+    # Save/Load Controls
+    st.subheader("Save/Load Analysis State")
+    col_save, col_load = st.columns([1, 1])
+    
+    with col_save:
+        if st.button("💾 Save Current Analysis"):
+            filename, state_data = save_analysis_state()
+            if filename:
+                st.success(f"✅ Analysis saved to: {filename}")
+                st.download_button(
+                    label="📥 Download State File",
+                    data=json.dumps(state_data, indent=2),
+                    file_name=filename,
+                    mime="application/json"
+                )
+    
+    with col_load:
+        uploaded_file = st.file_uploader("📤 Load Analysis State", type=['json'])
+        if uploaded_file is not None:
+            try:
+                # Save uploaded file temporarily
+                temp_filename = f"temp_load_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                with open(temp_filename, 'wb') as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                # Load the state
+                state_data = load_analysis_state(temp_filename)
+                if state_data:
+                    st.success("✅ Analysis state loaded successfully!")
+                    st.info(f"Loaded analysis from: {state_data.get('timestamp', 'Unknown')}")
+                    st.rerun()
+                
+                # Clean up temp file
+                import os
+                os.remove(temp_filename)
+                
+            except Exception as e:
+                st.error(f"Failed to load file: {str(e)}")
+    
     # Training split control
     col0 , col1,col2 = st.columns([0.05,1,0.18])
 with col1:
@@ -228,304 +345,307 @@ with col1:
             help="Percentage of data to use for training. Remaining data will be used for prediction."
         )
 
+        confidence_level = 80
+        
+        anomaly_threshold = 3.5
 
-confidence_level = 80
+        # Initial plot
 
+        # Split data based on slider value
+        split_point = int(len(df) * (training_split / 100))
 
-anomaly_threshold = 3.5
+        x_features = ['Speed','nGear','Throttle','RelativeDistance']
+        # Training data (first X% based on slider)
+        df_train = df.iloc[:split_point]
+        x_train = df_train[x_features]
+        y_train = df_train['RPM']
 
-# Initial plot
+        # Test data (remaining %)
+        df_test = df.iloc[split_point:]
+        x_test = df_test[x_features]
+        y_test = df_test['RPM']
 
-# Split data based on slider value
-split_point = int(len(df) * (training_split / 100))
+        # Try TabPFN model creation and training
+        tabpfn_success = False
+        try:
+            # Create TabPFN model
+            st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
 
-x_features = ['Speed','nGear','Throttle','RelativeDistance']
-# Training data (first X% based on slider)
-df_train = df.iloc[:split_point]
-x_train = df_train[x_features]
-y_train = df_train['RPM']
-
-# Test data (remaining %)
-df_test = df.iloc[split_point:]
-x_test = df_test[x_features]
-y_test = df_test['RPM']
-
-
-
-# Create custom TabPFN model for cloud deployment
-try:
-    # Set up authentication
-    os.environ['TABPFN_ACCESS_TOKEN'] = token
-    set_access_token(token)
-    
-    # Create custom TabPFN model
-    st.session_state.tabpfn_model = TabPFNRegressor(access_token=token)
-    
-    st.success("✅ Custom TabPFN model created successfully")
-    st.info("Using cloud-friendly TabPFN implementation")
-    
-except Exception as e:
-    st.error(f"❌ Failed to create TabPFN model: {str(e)}")
-    st.session_state.tabpfn_model = None
-
-# Fit the model on training data only
-if st.session_state.tabpfn_model is not None:
-    st.session_state.tabpfn_model.fit(x_train, y_train)
-    st.success("✅ TabPFN model fitted successfully")
-else:
-    st.error("❌ Cannot fit model - TabPFN model creation failed")
-    
-
-# Calculate quantiles for confidence interval
-alpha = (100 - confidence_level) / 100
-lower_quantile = alpha / 2
-upper_quantile = 1 - (alpha / 2)
-quantiles = [lower_quantile, upper_quantile]
-
-# Predict on test data with confidence intervals
-y_predicted = st.session_state.tabpfn_model.predict(x_test)
-y_confidence = st.session_state.tabpfn_model.predict(x_test, 
-                                                output_type='quantiles', 
-                                                quantiles=quantiles)
-
-# Store results for plotting
-st.session_state.df_test = df_test.copy()
-st.session_state.y_predicted = y_predicted
-st.session_state.y_test = y_test
-st.session_state.y_lower = y_confidence[0]
-st.session_state.y_upper = y_confidence[1]
-st.session_state.confidence_level = confidence_level
-    
-
-# Plot comparison
-if 'y_predicted' in st.session_state:
-    # Split the data for different colors
-    split_point = int(len(df) * (training_split / 100))
-    df_train_plot = df.iloc[:split_point]
-    df_test_plot = df.iloc[split_point:]
-    
-    # Create plot with training data (darker blue)
-    fig = px.line(df_train_plot, x='Time', y='RPM', 
-                title=f'RPM Data with TabPFN Prediction Overlay (Last {100-training_split}%)',
-                labels={'RPM': 'RPM'},
-                color_discrete_sequence=['#1f77b4'])  # Darker blue
-    
-    # Add test data (lighter blue)
-    fig.add_scatter(x=df_test_plot['Time'], 
-                y=df_test_plot['RPM'],
-                mode='lines',
-                name=f'Ground Truth (Last {100-training_split}%)',
-                line=dict(color='#87ceeb', width=2))  # Light blue
-    
-    # Add smooth confidence interval (continuous shaded area)
-    # Combine upper and lower bounds into a single continuous area
-    confidence_x = list(st.session_state.df_test['Time']) + list(st.session_state.df_test['Time'][::-1])
-    confidence_y = list(st.session_state.y_upper) + list(st.session_state.y_lower[::-1])
-    
-    fig.add_scatter(x=confidence_x,
-                y=confidence_y,
-                mode='lines',
-                name=f'{st.session_state.confidence_level}% Confidence Interval',
-                line=dict(
-                    color='rgba(255,0,0,0.1)',
-                    width=0
-                ),
-                fill='toself',
-                fillcolor='rgba(255,0,0,0.1)',
-                showlegend=True)
-    
-    # Add predicted values only for the test portion (remaining %)
-    fig.add_scatter(x=st.session_state.df_test['Time'], 
-                y=st.session_state.y_predicted,
-                mode='lines',
-                name='TabPFN Prediction',
-                line=dict(
-                    color='red', 
-                    dash='dash', 
-                    width=2,
-                    smoothing=1.3,
-                    shape='spline'
-                ))
-    
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="RPM",
-        showlegend=True,
-        title=f'RPM Data with TabPFN Prediction and {st.session_state.confidence_level}% Confidence Interval',
-        xaxis=dict(
-            rangeslider=dict(visible=True),
-            type="linear"
-        )
-    )
-    
-    st.plotly_chart(fig)
-    
-    
-else:
-    # Show original plot if no predictions yet
-    fig_original = px.line(df, x='Time', y='RPM', title='Original RPM Data')
-    fig_original.update_layout(
-        xaxis=dict(
-            rangeslider=dict(visible=True),
-            type="linear"
-        )
-    )
-    st.plotly_chart(fig_original)
-
-# Next Lap Analysis
-if df_next is not None and 'y_predicted' in st.session_state:
-    st.header(f"Next Lap Analysis (Lap {next_lap})")
-    
-    # Predict for the entire next lap
-    x_next_full = df_next[x_features]
-    y_next_full = df_next['RPM']
-    
-    # Use the same trained model to predict entire next lap
-    y_next_predicted = st.session_state.tabpfn_model.predict(x_next_full)
-    
-    # Anomaly Detection for Next Lap
-    prediction_errors = np.abs(y_next_full - y_next_predicted)
-    error_mean = np.mean(prediction_errors)
-    error_std = np.std(prediction_errors)
-    
-    # Calculate anomaly scores (z-scores)
-    anomaly_scores = (prediction_errors - error_mean) / error_std
-    
-    # Identify anomalies
-    anomalies = anomaly_scores > anomaly_threshold
-    anomaly_indices = np.where(anomalies)[0]
-    
-    # Create next lap plot - show entire lap
-    fig_next = px.line(df_next, x='Time', y='RPM', 
-                    title=f'Next Lap {next_lap} RPM Data with TabPFN Prediction and Anomaly Detection',
-                    labels={'RPM': 'RPM'},
-                    color_discrete_sequence=['#1f77b4'])  # Darker blue for ground truth
-    
-    # Add predicted values for entire lap
-    fig_next.add_scatter(x=df_next['Time'], 
-                        y=y_next_predicted,
-                        mode='lines',
-                        name='TabPFN Prediction',
-                        line=dict(
-                            color='red', 
-                            dash='dash', 
-                            width=2,
-                            smoothing=1.3,
-                            shape='spline'
-                        ))
-    
-    # Add anomaly points with clickable functionality
-    if len(anomaly_indices) > 0:
-        anomaly_times = df_next.iloc[anomaly_indices]['Time']
-        anomaly_rpm = df_next.iloc[anomaly_indices]['RPM']
+            # Fit the model on training data only
+            st.session_state.tabpfn_model.fit(x_train, y_train)
             
-        # Create customdata for each anomaly point to store index
-        customdata = [[idx] for idx in anomaly_indices]
+            # Calculate quantiles for confidence interval
+            alpha = (100 - confidence_level) / 100
+            lower_quantile = alpha / 2
+            upper_quantile = 1 - (alpha / 2)
+            quantiles = [lower_quantile, upper_quantile]
+
+            # Predict on test data with confidence intervals
+            y_predicted = st.session_state.tabpfn_model.predict(x_test)
+            y_confidence = st.session_state.tabpfn_model.predict(x_test, 
+                                                            output_type='quantiles', 
+                                                            quantiles=quantiles)
+
+            # Store results for plotting
+            st.session_state.df_test = df_test.copy()
+            st.session_state.y_predicted = y_predicted
+            st.session_state.y_test = y_test
+            st.session_state.y_lower = y_confidence[0]
+            st.session_state.y_upper = y_confidence[1]
+            st.session_state.confidence_level = confidence_level
+            
+            tabpfn_success = True
+            st.success("✅ TabPFN model trained successfully!")
+            
+        except Exception as e:
+            st.error(f"❌ TabPFN failed: {str(e)}")
+            st.warning("🔄 Using fallback mode - please load a saved analysis state")
+            
+            # Check if we have saved state to load
+            if 'y_predicted' not in st.session_state:
+                st.info("💡 Tip: Use 'Load Analysis State' above to restore a previous analysis")
+                st.session_state.tabpfn_model = None
         
-        fig_next.add_scatter(x=anomaly_times,
-                            y=anomaly_rpm,
-                            mode='markers',
-                            name=f'Anomalies (>{anomaly_threshold}σ)',
-                            customdata=customdata,
-                            marker=dict(
-                                color='orange',
-                                size=8,
-                                symbol='diamond',
-                                line=dict(color='darkorange', width=2)
+
+        # Plot comparison
+        if 'y_predicted' in st.session_state:
+            # Split the data for different colors
+            split_point = int(len(df) * (training_split / 100))
+            df_train_plot = df.iloc[:split_point]
+            df_test_plot = df.iloc[split_point:]
+            
+            # Create plot with training data (darker blue)
+            fig = px.line(df_train_plot, x='Time', y='RPM', 
+                          title=f'RPM Data with TabPFN Prediction Overlay (Last {100-training_split}%)',
+                          labels={'RPM': 'RPM'},
+                          color_discrete_sequence=['#1f77b4'])  # Darker blue
+            
+            # Add test data (lighter blue)
+            fig.add_scatter(x=df_test_plot['Time'], 
+                            y=df_test_plot['RPM'],
+                            mode='lines',
+                            name=f'Ground Truth (Last {100-training_split}%)',
+                            line=dict(color='#87ceeb', width=2))  # Light blue
+            
+            # Add smooth confidence interval (continuous shaded area)
+            # Combine upper and lower bounds into a single continuous area
+            confidence_x = list(st.session_state.df_test['Time']) + list(st.session_state.df_test['Time'][::-1])
+            confidence_y = list(st.session_state.y_upper) + list(st.session_state.y_lower[::-1])
+            
+            fig.add_scatter(x=confidence_x,
+                            y=confidence_y,
+                            mode='lines',
+                            name=f'{st.session_state.confidence_level}% Confidence Interval',
+                            line=dict(
+                                color='rgba(255,0,0,0.1)',
+                                width=0
+                            ),
+                            fill='toself',
+                            fillcolor='rgba(255,0,0,0.1)',
+                            showlegend=True)
+            
+            # Add predicted values only for the test portion (remaining %)
+            fig.add_scatter(x=st.session_state.df_test['Time'], 
+                            y=st.session_state.y_predicted,
+                            mode='lines',
+                            name='TabPFN Prediction',
+                            line=dict(
+                                color='red', 
+                                dash='dash', 
+                                width=2,
+                                smoothing=1.3,
+                                shape='spline'
                             ))
-    
-    fig_next.update_layout(
-        xaxis_title="Time",
-        yaxis_title="RPM",
-        showlegend=True,
-        title=f'Next Lap {next_lap} RPM Data with TabPFN Prediction and Anomaly Detection',
-        xaxis=dict(
-            rangeslider=dict(visible=True),
-            type="linear"
-        )
-    )
-    
-    # Display the plot and handle click events
-    selected_points = st.plotly_chart(fig_next, on_select="rerun", selection_mode="points")
-    
-    # Handle anomaly selection
-    if selected_points and 'selection' in selected_points:
-        # Get selected point indices
-        selected_indices = []
-        for point in selected_points['selection']['points']:
-            if 'customdata' in point and point['customdata']:
-                selected_indices.append(point['customdata'][0])
-        
-        # Update selected anomalies
-        st.session_state.selected_anomalies = selected_indices
-    
-    # Display selection controls
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("Clear Selection"):
-            st.session_state.selected_anomalies = []
-            st.rerun()
-    
-    with col2:
-        if st.button("Select All Anomalies"):
-            st.session_state.selected_anomalies = list(anomaly_indices)
-            st.rerun()
-    
-    # Display selected anomalies info
-    if st.session_state.selected_anomalies:
-        st.subheader(f"Selected Anomalies ({len(st.session_state.selected_anomalies)} selected)")
-        
-        # Create dataframe for selected anomalies
-        selected_df = df_next.iloc[st.session_state.selected_anomalies].copy()
-        selected_df['Prediction_Error'] = prediction_errors[st.session_state.selected_anomalies]
-        selected_df['Anomaly_Score'] = anomaly_scores[st.session_state.selected_anomalies]
-        selected_df['Predicted_RPM'] = y_next_predicted[st.session_state.selected_anomalies]
-        
-        # Display key columns
-        display_cols = ['Time', 'RPM', 'Predicted_RPM', 'Prediction_Error', 'Anomaly_Score', 'Speed', 'nGear', 'Throttle']
-        st.dataframe(selected_df[display_cols].round(2), use_container_width=True)
-        
-        # Summary statistics for selected anomalies
-        if len(st.session_state.selected_anomalies) > 1:
-            st.subheader("Selected Anomalies Summary")
-            col1, col2, col3 = st.columns(3)
+            
+            fig.update_layout(
+                xaxis_title="Time",
+                yaxis_title="RPM",
+                showlegend=True,
+                title=f'RPM Data with TabPFN Prediction and {st.session_state.confidence_level}% Confidence Interval',
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type="linear"
+                )
+            )
+            
+            st.plotly_chart(fig)
+            
+        else:
+            # Show original plot if no predictions yet
+            fig_original = px.line(df, x='Time', y='RPM', title='Original RPM Data')
+            fig_original.update_layout(
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type="linear"
+                )
+            )
+            st.plotly_chart(fig_original)
+
+        # Next Lap Analysis
+        if df_next is not None and 'y_predicted' in st.session_state:
+            st.header(f"Next Lap Analysis (Lap {next_lap})")
+            
+            # Predict for the entire next lap
+            x_next_full = df_next[x_features]
+            y_next_full = df_next['RPM']
+            
+            # Try to use the trained model to predict entire next lap
+            try:
+                if st.session_state.tabpfn_model is not None:
+                    y_next_predicted = st.session_state.tabpfn_model.predict(x_next_full)
+                else:
+                    st.warning("⚠️ TabPFN model not available - using loaded predictions")
+                    # If we're in fallback mode, we should have loaded predictions
+                    if 'y_next_predicted' not in locals():
+                        st.error("No predictions available for next lap")
+                        st.stop()
+            except Exception as e:
+                st.error(f"❌ Next lap prediction failed: {str(e)}")
+                st.info("💡 Try loading a saved analysis state that includes next lap predictions")
+                st.stop()
+            
+            # Anomaly Detection for Next Lap
+            prediction_errors = np.abs(y_next_full - y_next_predicted)
+            error_mean = np.mean(prediction_errors)
+            error_std = np.std(prediction_errors)
+            
+            # Calculate anomaly scores (z-scores)
+            anomaly_scores = (prediction_errors - error_mean) / error_std
+            
+            # Identify anomalies
+            anomalies = anomaly_scores > anomaly_threshold
+            anomaly_indices = np.where(anomalies)[0]
+            
+            # Create next lap plot - show entire lap
+            fig_next = px.line(df_next, x='Time', y='RPM', 
+                                title=f'Next Lap {next_lap} RPM Data with TabPFN Prediction and Anomaly Detection',
+                                labels={'RPM': 'RPM'},
+                                color_discrete_sequence=['#1f77b4'])  # Darker blue for ground truth
+            
+            # Add predicted values for entire lap
+            fig_next.add_scatter(x=df_next['Time'], 
+                                y=y_next_predicted,
+                                mode='lines',
+                                name='TabPFN Prediction',
+                                line=dict(
+                                    color='red', 
+                                    dash='dash', 
+                                    width=2,
+                                    smoothing=1.3,
+                                    shape='spline'
+                                ))
+            
+            # Add anomaly points with clickable functionality
+            if len(anomaly_indices) > 0:
+                anomaly_times = df_next.iloc[anomaly_indices]['Time']
+                anomaly_rpm = df_next.iloc[anomaly_indices]['RPM']
+                
+                # Create customdata for each anomaly point to store index
+                customdata = [[idx] for idx in anomaly_indices]
+                
+                fig_next.add_scatter(x=anomaly_times,
+                                    y=anomaly_rpm,
+                                    mode='markers',
+                                    name=f'Anomalies (>{anomaly_threshold}σ)',
+                                    customdata=customdata,
+                                    marker=dict(
+                                        color='orange',
+                                        size=8,
+                                        symbol='diamond',
+                                        line=dict(color='darkorange', width=2)
+                                    ))
+            
+            fig_next.update_layout(
+            xaxis_title="Time",
+                yaxis_title="RPM",
+                showlegend=True,
+                title=f'Next Lap {next_lap} RPM Data with TabPFN Prediction and Anomaly Detection',
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type="linear"
+                )
+            )
+            
+            # Display the plot and handle click events
+            selected_points = st.plotly_chart(fig_next, on_select="rerun", selection_mode="points")
+            
+            # Handle anomaly selection
+            if selected_points and 'selection' in selected_points:
+                # Get selected point indices
+                selected_indices = []
+                for point in selected_points['selection']['points']:
+                    if 'customdata' in point and point['customdata']:
+                        selected_indices.append(point['customdata'][0])
+                
+                # Update selected anomalies
+                st.session_state.selected_anomalies = selected_indices
+            
+            # Display selection controls
+            col1, col2 = st.columns([1, 1])
             with col1:
-                st.metric("Avg Prediction Error", f"{np.mean(prediction_errors[st.session_state.selected_anomalies]):.2f}")
+                if st.button("Clear Selection"):
+                    st.session_state.selected_anomalies = []
+                    st.rerun()
+            
             with col2:
-                st.metric("Max Anomaly Score", f"{np.max(anomaly_scores[st.session_state.selected_anomalies]):.2f}")
+                if st.button("Select All Anomalies"):
+                    st.session_state.selected_anomalies = list(anomaly_indices)
+                    st.rerun()
+            
+            # Display selected anomalies info
+            if st.session_state.selected_anomalies:
+                st.subheader(f"Selected Anomalies ({len(st.session_state.selected_anomalies)} selected)")
+                
+                # Create dataframe for selected anomalies
+                selected_df = df_next.iloc[st.session_state.selected_anomalies].copy()
+                selected_df['Prediction_Error'] = prediction_errors[st.session_state.selected_anomalies]
+                selected_df['Anomaly_Score'] = anomaly_scores[st.session_state.selected_anomalies]
+                selected_df['Predicted_RPM'] = y_next_predicted[st.session_state.selected_anomalies]
+                
+                # Display key columns
+                display_cols = ['Time', 'RPM', 'Predicted_RPM', 'Prediction_Error', 'Anomaly_Score', 'Speed', 'nGear', 'Throttle']
+                st.dataframe(selected_df[display_cols].round(2), use_container_width=True)
+                
+                # Summary statistics for selected anomalies
+                if len(st.session_state.selected_anomalies) > 1:
+                    st.subheader("Selected Anomalies Summary")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Avg Prediction Error", f"{np.mean(prediction_errors[st.session_state.selected_anomalies]):.2f}")
+                    with col2:
+                        st.metric("Max Anomaly Score", f"{np.max(anomaly_scores[st.session_state.selected_anomalies]):.2f}")
+                    with col3:
+                        st.metric("Time Range", f"{np.min(selected_df['Time']):.1f}s - {np.max(selected_df['Time']):.1f}s")
+            
+            # Display all anomalies summary
+            st.subheader("All Anomalies Summary")
+            total_points = len(df_next)
+            anomaly_count = len(anomaly_indices)
+            anomaly_percentage = (anomaly_count / total_points) * 100
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Points", f"{total_points}")
+            with col2:
+                st.metric("Anomalies Detected", f"{anomaly_count}")
             with col3:
-                st.metric("Time Range", f"{np.min(selected_df['Time']):.1f}s - {np.max(selected_df['Time']):.1f}s")
-    
-    # Display all anomalies summary
-    st.subheader("All Anomalies Summary")
-    total_points = len(df_next)
-    anomaly_count = len(anomaly_indices)
-    anomaly_percentage = (anomaly_count / total_points) * 100
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Points", f"{total_points}")
-    with col2:
-        st.metric("Anomalies Detected", f"{anomaly_count}")
-    with col3:
-        st.metric("Anomaly Rate", f"{anomaly_percentage:.1f}%")
-    with col4:
-        st.metric("Threshold", f"{anomaly_threshold}σ")
-    
+                st.metric("Anomaly Rate", f"{anomaly_percentage:.1f}%")
+            with col4:
+                st.metric("Threshold", f"{anomaly_threshold}σ")
+            
 
-
-elif df_next is not None:
-    st.header(f"Next Lap Data Available (Lap {next_lap})")
-    st.info("Train the model on current lap first to see next lap predictions")
-    
-    # Show next lap data without predictions
-    fig_next_original = px.line(df_next, x='Time', y='RPM', title=f'Next Lap {next_lap} Original RPM Data')
-    fig_next_original.update_layout(
-        xaxis=dict(
-            rangeslider=dict(visible=True),
-            type="linear"
-        )
-    )
-    st.plotly_chart(fig_next_original)
+        elif df_next is not None:
+            st.header(f"Next Lap Data Available (Lap {next_lap})")
+            st.info("Train the model on current lap first to see next lap predictions")
+            
+            # Show next lap data without predictions
+            fig_next_original = px.line(df_next, x='Time', y='RPM', title=f'Next Lap {next_lap} Original RPM Data')
+            fig_next_original.update_layout(
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type="linear"
+                )
+            )
+            st.plotly_chart(fig_next_original)
 
 
