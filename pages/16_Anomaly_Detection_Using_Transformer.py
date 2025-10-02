@@ -101,14 +101,15 @@ def save_analysis_state(filename_prefix="anomaly_analysis"):
             })
         
         # Save next lap data if available
-        if df_next is not None and 'y_predicted' in st.session_state:
+        if ('df_next' in st.session_state and st.session_state.df_next is not None and
+            'y_next_predicted' in st.session_state):
             state_data.update({
-                'df_next': df_next.to_dict('records'),
-                'y_next_predicted': y_next_predicted.tolist(),
-                'y_next_full': y_next_full.tolist(),
-                'prediction_errors': prediction_errors.tolist(),
-                'anomaly_scores': anomaly_scores.tolist(),
-                'anomaly_indices': anomaly_indices.tolist(),
+                'df_next': st.session_state.df_next.to_dict('records'),
+                'y_next_predicted': st.session_state.y_next_predicted.tolist(),
+                'y_next_full': st.session_state.y_next_full.tolist(),
+                'prediction_errors': st.session_state.prediction_errors.tolist(),
+                'anomaly_scores': st.session_state.anomaly_scores.tolist(),
+                'anomaly_indices': st.session_state.anomaly_indices.tolist(),
                 'selected_anomalies': st.session_state.selected_anomalies
             })
         
@@ -145,13 +146,12 @@ def load_analysis_state(filename):
         
         # Restore next lap data
         if 'df_next' in state_data:
-            global df_next, y_next_predicted, y_next_full, prediction_errors, anomaly_scores, anomaly_indices
-            df_next = pd.DataFrame(state_data['df_next'])
-            y_next_predicted = np.array(state_data['y_next_predicted'])
-            y_next_full = np.array(state_data['y_next_full'])
-            prediction_errors = np.array(state_data['prediction_errors'])
-            anomaly_scores = np.array(state_data['anomaly_scores'])
-            anomaly_indices = np.array(state_data['anomaly_indices'])
+            st.session_state.df_next = pd.DataFrame(state_data['df_next'])
+            st.session_state.y_next_predicted = np.array(state_data['y_next_predicted'])
+            st.session_state.y_next_full = np.array(state_data['y_next_full'])
+            st.session_state.prediction_errors = np.array(state_data['prediction_errors'])
+            st.session_state.anomaly_scores = np.array(state_data['anomaly_scores'])
+            st.session_state.anomaly_indices = np.array(state_data['anomaly_indices'])
             st.session_state.selected_anomalies = state_data.get('selected_anomalies', [])
         
         return state_data
@@ -177,21 +177,31 @@ def find_latest_saved_state():
     except Exception as e:
         return None
 
-def auto_load_saved_state():
-    """Automatically load the most recent saved state"""
+def auto_load_saved_state(deployment_file=None):
+    """Automatically load the most recent saved state or specified deployment file"""
     if st.session_state.auto_load_attempted:
         return False
     
     st.session_state.auto_load_attempted = True
     
-    latest_file = find_latest_saved_state()
-    if latest_file:
-        st.info(f"📂 Found saved analysis: `{latest_file}`")
-        state_data = load_analysis_state(latest_file)
+    # If in deployment mode and deployment file is specified, use it
+    if deployment_file and os.path.exists(deployment_file):
+        st.info(f"📂 Loading deployment state: `{deployment_file}`")
+        state_data = load_analysis_state(deployment_file)
         if state_data:
             st.success(f"✅ Auto-loaded analysis from {state_data.get('timestamp', 'unknown time')}")
             st.warning("⚠️ Running in **OFFLINE MODE** - Using saved predictions")
             return True
+    else:
+        # Otherwise, find the latest saved state
+        latest_file = find_latest_saved_state()
+        if latest_file:
+            st.info(f"📂 Found saved analysis: `{latest_file}`")
+            state_data = load_analysis_state(latest_file)
+            if state_data:
+                st.success(f"✅ Auto-loaded analysis from {state_data.get('timestamp', 'unknown time')}")
+                st.warning("⚠️ Running in **OFFLINE MODE** - Using saved predictions")
+                return True
     
     return False
 
@@ -290,7 +300,19 @@ if 'auto_load_attempted' not in st.session_state:
     st.session_state.auto_load_attempted = False
 
 if 'deployment_mode' not in st.session_state:
-    st.session_state.deployment_mode = False
+    st.session_state.deployment_mode = True
+
+if 'manual_mode_switch' not in st.session_state:
+    st.session_state.manual_mode_switch = False
+
+if 'tabpfn_model' not in st.session_state:
+    st.session_state.tabpfn_model = None
+
+if 'tabpfn_fitted' not in st.session_state:
+    st.session_state.tabpfn_fitted = False
+
+# Default saved state file for deployment mode
+DEPLOYMENT_STATE_FILE = "anomaly_analysis_20251002_015318.json"
 
 # For loading images
 @st.cache_resource
@@ -327,26 +349,69 @@ else:
     st.warning(f"Next lap ({next_lap}) data not available")
 
 
+# Mode Switch UI
+st.markdown("---")
+col_mode, col_status = st.columns([1, 2])
+
+with col_mode:
+    mode_options = ["🔧 Local Mode (TabPFN)", "🌐 Deployment Mode (Offline)"]
+    current_mode_idx = 1 if st.session_state.deployment_mode else 0
+    
+    selected_mode = st.radio(
+        "**Operating Mode:**",
+        mode_options,
+        index=current_mode_idx,
+        help="Local Mode: Use TabPFN for live predictions\nDeployment Mode: Load pre-saved analysis state"
+    )
+    
+    # Update deployment mode based on selection
+    new_deployment_mode = (selected_mode == mode_options[1])
+    
+    # If mode changed, reset auto_load_attempted to allow re-loading
+    if new_deployment_mode != st.session_state.deployment_mode:
+        st.session_state.deployment_mode = new_deployment_mode
+        st.session_state.manual_mode_switch = True
+        st.session_state.auto_load_attempted = False
+        st.rerun()
+
+with col_status:
+    if st.session_state.deployment_mode:
+        st.info(f"""
+        **🌐 Deployment Mode Active**
+        - Using pre-saved analysis state
+        - TabPFN predictions disabled
+        - Loading from: `{DEPLOYMENT_STATE_FILE}`
+        """)
+    else:
+        st.success("""
+        **🔧 Local Mode Active**
+        - TabPFN live predictions enabled
+        - Can train new models
+        - Full functionality available
+        """)
+
+st.markdown("---")
+
 # Check for deployment mode or TabPFN availability
 deployment_mode_detected = False
-try:
-    # Try a quick TabPFN import to see if it's available
-    import tabpfn_client
-    # If we get here, TabPFN is available but might fail to connect
-    deployment_mode_detected = False
-except Exception:
-    deployment_mode_detected = True
-    st.session_state.deployment_mode = True
+if not st.session_state.deployment_mode:
+    try:
+        # Try a quick TabPFN import to see if it's available
+        import tabpfn_client
+        # If we get here, TabPFN is available but might fail to connect
+        deployment_mode_detected = False
+    except Exception:
+        deployment_mode_detected = True
+        st.session_state.deployment_mode = True
 
-# Display deployment mode banner
-if deployment_mode_detected or st.session_state.deployment_mode:
-    st.info("🌐 **Deployment Mode Detected** - TabPFN may not be available. The dashboard will automatically load saved analysis states.")
-    
+# Auto-load in deployment mode
+if st.session_state.deployment_mode:
     # Try to auto-load if not already done
     if not st.session_state.auto_load_attempted and 'y_predicted' not in st.session_state:
-        auto_loaded = auto_load_saved_state()
+        # Use the specified deployment file
+        auto_loaded = auto_load_saved_state(deployment_file=DEPLOYMENT_STATE_FILE)
         if auto_loaded:
-            st.success("✅ Successfully loaded saved analysis state!")
+            st.success("✅ Successfully loaded deployment analysis state!")
 
 with st.expander('Introduction',expanded=True):
     st.write("")
@@ -355,71 +420,87 @@ with st.expander('Introduction',expanded=True):
     st.image(image,use_column_width=True)
 
 with st.expander('Testing',expanded=True):
-    # Save/Load Controls
-    st.subheader("Save/Load Analysis State")
-    
-    # Show helpful reminder
-    if st.session_state.deployment_mode or 'y_predicted' in st.session_state:
-        st.info("💡 **Tip:** Save your analysis to use it later when TabPFN is unavailable. Saved files auto-load on deployment!")
-    
-    col_save, col_load = st.columns([1, 1])
-    
-    with col_save:
-        if st.button("💾 Save Current Analysis"):
-            filename, state_data = save_analysis_state()
-            if filename:
-                st.success(f"✅ Analysis saved to: {filename}")
-                st.download_button(
-                    label="📥 Download State File",
-                    data=json.dumps(state_data, indent=2),
-                    file_name=filename,
-                    mime="application/json"
-                )
-    
-    with col_load:
-        uploaded_file = st.file_uploader("📤 Load Analysis State", type=['json'])
-        if uploaded_file is not None:
-            try:
-                # Save uploaded file temporarily
-                temp_filename = f"temp_load_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                with open(temp_filename, 'wb') as f:
-                    f.write(uploaded_file.getbuffer())
-                
-                # Load the state
-                state_data = load_analysis_state(temp_filename)
-                if state_data:
-                    st.success("✅ Analysis state loaded successfully!")
-                    st.info(f"Loaded analysis from: {state_data.get('timestamp', 'Unknown')}")
-                    st.rerun()
-                
-                # Clean up temp file
-                import os
-                os.remove(temp_filename)
-                
-            except Exception as e:
-                st.error(f"Failed to load file: {str(e)}")
+    # Save/Load Controls - Only show in Local Mode
+    if not st.session_state.deployment_mode:
+        st.subheader("Save/Load Analysis State")
+        
+        # Show helpful reminder
+        if 'y_predicted' in st.session_state:
+            st.info("💡 **Tip:** Save your analysis to use it later when TabPFN is unavailable. Saved files auto-load on deployment!")
+        
+        col_save, col_load = st.columns([1, 1])
+        
+        with col_save:
+            if st.button("💾 Save Current Analysis"):
+                filename, state_data = save_analysis_state()
+                if filename:
+                    st.success(f"✅ Analysis saved to: {filename}")
+                    st.download_button(
+                        label="📥 Download State File",
+                        data=json.dumps(state_data, indent=2),
+                        file_name=filename,
+                        mime="application/json"
+                    )
+        
+        with col_load:
+            uploaded_file = st.file_uploader("📤 Load Analysis State", type=['json'])
+            if uploaded_file is not None:
+                try:
+                    # Save uploaded file temporarily
+                    temp_filename = f"temp_load_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                    with open(temp_filename, 'wb') as f:
+                        f.write(uploaded_file.getbuffer())
+                    
+                    # Load the state
+                    state_data = load_analysis_state(temp_filename)
+                    if state_data:
+                        st.success("✅ Analysis state loaded successfully!")
+                        st.info(f"Loaded analysis from: {state_data.get('timestamp', 'Unknown')}")
+                        st.rerun()
+                    
+                    # Clean up temp file
+                    import os
+                    os.remove(temp_filename)
+                    
+                except Exception as e:
+                    st.error(f"Failed to load file: {str(e)}")
+    else:
+        # In deployment mode, show info message instead
+        st.info("🌐 **Deployment Mode** - Save/Load controls are disabled. Using pre-loaded state file: `" + DEPLOYMENT_STATE_FILE + "`")
     
     # Training split control
     col0 , col1,col2 = st.columns([0.05,1,0.18])
 with col1:
-        st.header("Training Configuration")
-        training_split = st.slider(
-            "Training Data Percentage", 
-            min_value=10, 
-            max_value=90, 
-            value=75, 
-            step=5,
-            help="Percentage of data to use for training. Remaining data will be used for prediction."
-        )
+        # Skip training section if in deployment mode
+        if st.session_state.deployment_mode:
+            st.header("Configuration (Deployment Mode)")
+            st.info("⚠️ Training is disabled in Deployment Mode. Using pre-loaded model and predictions.")
+            
+            # Use default values from loaded state if available
+            training_split = 75
+            confidence_level = st.session_state.confidence_level if 'confidence_level' in st.session_state else 80
+            anomaly_threshold = 3.5
+            
+            split_point = int(len(df) * (training_split / 100))
+        else:
+            st.header("Training Configuration")
+            training_split = st.slider(
+                "Training Data Percentage", 
+                min_value=10, 
+                max_value=90, 
+                value=75, 
+                step=5,
+                help="Percentage of data to use for training. Remaining data will be used for prediction."
+            )
 
-        confidence_level = 80
-        
-        anomaly_threshold = 3.5
+            confidence_level = 80
+            
+            anomaly_threshold = 3.5
 
-        # Initial plot
+            # Initial plot
 
-        # Split data based on slider value
-        split_point = int(len(df) * (training_split / 100))
+            # Split data based on slider value
+            split_point = int(len(df) * (training_split / 100))
 
         x_features = ['Speed','nGear','Throttle','RelativeDistance']
         # Training data (first X% based on slider)
@@ -432,59 +513,69 @@ with col1:
         x_test = df_test[x_features]
         y_test = df_test['RPM']
 
-        # Try TabPFN model creation and training
+        # Try TabPFN model creation and training (skip in deployment mode)
         tabpfn_success = False
-        try:
-            # Create TabPFN model
-            st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
-
-            # Fit the model on training data only
-            st.session_state.tabpfn_model.fit(x_train, y_train)
-            
-            # Calculate quantiles for confidence interval
-            alpha = (100 - confidence_level) / 100
-            lower_quantile = alpha / 2
-            upper_quantile = 1 - (alpha / 2)
-            quantiles = [lower_quantile, upper_quantile]
-
-            # Predict on test data with confidence intervals
-            y_predicted = st.session_state.tabpfn_model.predict(x_test)
-            y_confidence = st.session_state.tabpfn_model.predict(x_test, 
-                                                            output_type='quantiles', 
-                                                            quantiles=quantiles)
-
-            # Store results for plotting
-            st.session_state.df_test = df_test.copy()
-            st.session_state.y_predicted = y_predicted
-            st.session_state.y_test = y_test
-            st.session_state.y_lower = y_confidence[0]
-            st.session_state.y_upper = y_confidence[1]
-            st.session_state.confidence_level = confidence_level
-            
-            tabpfn_success = True
-            st.success("✅ TabPFN model trained successfully!")
-            st.info("💾 **Don't forget to save** your analysis using the 'Save Current Analysis' button for offline use!")
-            
-        except Exception as e:
-            st.error(f"❌ TabPFN failed: {str(e)}")
-            st.warning("🔄 Using fallback mode - Attempting to load saved analysis state...")
-            
-            # Try to auto-load saved state
-            if 'y_predicted' not in st.session_state:
-                auto_loaded = auto_load_saved_state()
-                
-                if not auto_loaded:
-                    st.info("💡 **No saved state found.** You can:")
-                    st.markdown("""
-                    - Upload a saved analysis file using the 'Load Analysis State' button above
-                    - Run the analysis when TabPFN is available and save the state for future use
-                    - Check if there are any `anomaly_analysis_*.json` files in the working directory
-                    """)
-                    st.session_state.tabpfn_model = None
-                else:
-                    st.info("✨ Dashboard is now running with previously saved predictions")
+        
+        if st.session_state.deployment_mode:
+            # In deployment mode, just verify we have loaded predictions
+            if 'y_predicted' in st.session_state:
+                st.success("✅ Using pre-loaded predictions from deployment state")
+                tabpfn_success = True
             else:
-                st.session_state.tabpfn_model = None
+                st.error("❌ No predictions loaded. Please check deployment state file.")
+        else:
+            # Local mode - train TabPFN model
+            try:
+                # Create TabPFN model
+                st.session_state.tabpfn_model = tabpfn_client.TabPFNRegressor()
+
+                # Fit the model on training data only
+                st.session_state.tabpfn_model.fit(x_train, y_train)
+                
+                # Calculate quantiles for confidence interval
+                alpha = (100 - confidence_level) / 100
+                lower_quantile = alpha / 2
+                upper_quantile = 1 - (alpha / 2)
+                quantiles = [lower_quantile, upper_quantile]
+
+                # Predict on test data with confidence intervals
+                y_predicted = st.session_state.tabpfn_model.predict(x_test)
+                y_confidence = st.session_state.tabpfn_model.predict(x_test, 
+                                                                output_type='quantiles', 
+                                                                quantiles=quantiles)
+
+                # Store results for plotting
+                st.session_state.df_test = df_test.copy()
+                st.session_state.y_predicted = y_predicted
+                st.session_state.y_test = y_test
+                st.session_state.y_lower = y_confidence[0]
+                st.session_state.y_upper = y_confidence[1]
+                st.session_state.confidence_level = confidence_level
+                
+                tabpfn_success = True
+                st.success("✅ TabPFN model trained successfully!")
+                st.info("💾 **Don't forget to save** your analysis using the 'Save Current Analysis' button for offline use!")
+                
+            except Exception as e:
+                st.error(f"❌ TabPFN failed: {str(e)}")
+                st.warning("🔄 Using fallback mode - Attempting to load saved analysis state...")
+                
+                # Try to auto-load saved state
+                if 'y_predicted' not in st.session_state:
+                    auto_loaded = auto_load_saved_state()
+                    
+                    if not auto_loaded:
+                        st.info("💡 **No saved state found.** You can:")
+                        st.markdown("""
+                        - Upload a saved analysis file using the 'Load Analysis State' button above
+                        - Run the analysis when TabPFN is available and save the state for future use
+                        - Check if there are any `anomaly_analysis_*.json` files in the working directory
+                        """)
+                        st.session_state.tabpfn_model = None
+                    else:
+                        st.info("✨ Dashboard is now running with previously saved predictions")
+                else:
+                    st.session_state.tabpfn_model = None
         
 
         # Plot comparison
@@ -562,27 +653,48 @@ with col1:
             st.plotly_chart(fig_original)
 
         # Next Lap Analysis
-        if df_next is not None and 'y_predicted' in st.session_state:
+        # Use session_state df_next if available (from loaded state), otherwise use local df_next
+        current_df_next = st.session_state.df_next if 'df_next' in st.session_state else df_next
+        
+        if current_df_next is not None and 'y_predicted' in st.session_state:
             st.header(f"Next Lap Analysis (Lap {next_lap})")
             
             # Predict for the entire next lap
-            x_next_full = df_next[x_features]
-            y_next_full = df_next['RPM']
+            x_next_full = current_df_next[x_features]
+            y_next_full = current_df_next['RPM']
+            
+            # Store for saving
+            if 'df_next' not in st.session_state:
+                st.session_state.df_next = current_df_next
+            st.session_state.y_next_full = y_next_full
             
             # Try to use the trained model to predict entire next lap
-            try:
-                if st.session_state.tabpfn_model is not None:
-                    y_next_predicted = st.session_state.tabpfn_model.predict(x_next_full)
+            # In deployment mode, always use loaded predictions
+            if st.session_state.deployment_mode:
+                if 'y_next_predicted' in st.session_state and st.session_state.y_next_predicted is not None:
+                    y_next_predicted = st.session_state.y_next_predicted
                 else:
-                    st.warning("⚠️ TabPFN model not available - using loaded predictions")
-                    # If we're in fallback mode, we should have loaded predictions
-                    if 'y_next_predicted' not in locals():
-                        st.error("No predictions available for next lap")
-                        st.stop()
-            except Exception as e:
-                st.error(f"❌ Next lap prediction failed: {str(e)}")
-                st.info("💡 Try loading a saved analysis state that includes next lap predictions")
-                st.stop()
+                    st.error("❌ No next lap predictions loaded from deployment state file")
+                    st.info("💡 The loaded state file may not include next lap predictions")
+                    st.stop()
+            else:
+                # Local mode - try to use TabPFN model
+                try:
+                    if st.session_state.tabpfn_model is not None:
+                        y_next_predicted = st.session_state.tabpfn_model.predict(x_next_full)
+                        st.session_state.y_next_predicted = y_next_predicted
+                    else:
+                        st.warning("⚠️ TabPFN model not available - using loaded predictions")
+                        # If we're in fallback mode, we should have loaded predictions
+                        if 'y_next_predicted' in st.session_state:
+                            y_next_predicted = st.session_state.y_next_predicted
+                        else:
+                            st.error("No predictions available for next lap")
+                            st.stop()
+                except Exception as e:
+                    st.error(f"❌ Next lap prediction failed: {str(e)}")
+                    st.info("💡 Try loading a saved analysis state that includes next lap predictions")
+                    st.stop()
             
             # Anomaly Detection for Next Lap
             prediction_errors = np.abs(y_next_full - y_next_predicted)
@@ -596,14 +708,19 @@ with col1:
             anomalies = anomaly_scores > anomaly_threshold
             anomaly_indices = np.where(anomalies)[0]
             
+            # Store in session state for saving
+            st.session_state.prediction_errors = prediction_errors
+            st.session_state.anomaly_scores = anomaly_scores
+            st.session_state.anomaly_indices = anomaly_indices
+            
             # Create next lap plot - show entire lap
-            fig_next = px.line(df_next, x='Time', y='RPM', 
+            fig_next = px.line(current_df_next, x='Time', y='RPM', 
                                 title=f'Next Lap {next_lap} RPM Data with TabPFN Prediction and Anomaly Detection',
                                 labels={'RPM': 'RPM'},
                                 color_discrete_sequence=['#1f77b4'])  # Darker blue for ground truth
             
             # Add predicted values for entire lap
-            fig_next.add_scatter(x=df_next['Time'], 
+            fig_next.add_scatter(x=current_df_next['Time'], 
                                 y=y_next_predicted,
                                 mode='lines',
                                 name='TabPFN Prediction',
@@ -617,8 +734,8 @@ with col1:
             
             # Add anomaly points with clickable functionality
             if len(anomaly_indices) > 0:
-                anomaly_times = df_next.iloc[anomaly_indices]['Time']
-                anomaly_rpm = df_next.iloc[anomaly_indices]['RPM']
+                anomaly_times = current_df_next.iloc[anomaly_indices]['Time']
+                anomaly_rpm = current_df_next.iloc[anomaly_indices]['RPM']
                 
                 # Create customdata for each anomaly point to store index
                 customdata = [[idx] for idx in anomaly_indices]
@@ -677,7 +794,7 @@ with col1:
                 st.subheader(f"Selected Anomalies ({len(st.session_state.selected_anomalies)} selected)")
                 
                 # Create dataframe for selected anomalies
-                selected_df = df_next.iloc[st.session_state.selected_anomalies].copy()
+                selected_df = current_df_next.iloc[st.session_state.selected_anomalies].copy()
                 selected_df['Prediction_Error'] = prediction_errors[st.session_state.selected_anomalies]
                 selected_df['Anomaly_Score'] = anomaly_scores[st.session_state.selected_anomalies]
                 selected_df['Predicted_RPM'] = y_next_predicted[st.session_state.selected_anomalies]
