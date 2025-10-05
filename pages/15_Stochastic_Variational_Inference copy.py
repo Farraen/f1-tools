@@ -433,8 +433,12 @@ with st.expander("Engine Air Flow Model Parameters",expanded=True):
         if comparison_data:
             import pandas as pd
             df_comparison = pd.DataFrame(comparison_data)
+            df_comparison = df_comparison[df_comparison['Parameter'] != 'noise_std']
+            df_comparison = df_comparison.reset_index(drop=True)
             st.dataframe(df_comparison, use_container_width=True)
             
+            comparison_data =  df_comparison.to_dict(orient='records')
+
             # Parameter comparison visualization
             fig_params = go.Figure()
             
@@ -490,15 +494,12 @@ with st.expander("Engine Air Flow Model Parameters",expanded=True):
 
         # Create comprehensive visualization using Plotly subplots
         fig_results = make_subplots(
-            rows=2, cols=2,
+            rows=1, cols=2,
             subplot_titles=(
                 "Air Flow vs Engine Speed", 
                 "Air Flow vs Throttle Position",
-                "Parameter Comparison", 
-                "Residuals Plot"
             ),
-            specs=[[{"secondary_y": False}, {"secondary_y": False}],
-                [{"secondary_y": False}, {"secondary_y": False}]]
+            specs=[[{"secondary_y": False}, {"secondary_y": False}]]
         )
 
         # 1. Air flow vs Engine Speed
@@ -578,71 +579,10 @@ with st.expander("Engine Air Flow Model Parameters",expanded=True):
             row=1, col=2
         )
 
-        # 3. Parameter comparison
-        param_names = list(true_params.keys())
-        true_values = [true_params[p] for p in param_names]
-        est_values = [estimated_params.get(p, 0.0) for p in param_names]
-
-        fig_results.add_trace(
-            go.Bar(
-                name='True',
-                x=param_names,
-                y=true_values,
-                marker_color='green',
-                opacity=0.7,
-                hovertemplate='Parameter: %{x}<br>True Value: %{y:.3f}<extra></extra>'
-            ),
-            row=2, col=1
-        )
-        
-        fig_results.add_trace(
-            go.Bar(
-                name='Estimated',
-                x=param_names,
-                y=est_values,
-                marker_color='red',
-                opacity=0.7,
-                hovertemplate='Parameter: %{x}<br>Estimated Value: %{y:.3f}<extra></extra>',
-                showlegend=False
-            ),
-            row=2, col=1
-        )
-
-        # 4. Residuals
-        residuals_true = observed_air_flow - true_air_flow
-        residuals_estimated = observed_air_flow - predicted_flow_estimated
-
-        fig_results.add_trace(
-            go.Scatter(
-                x=true_air_flow,
-                y=residuals_true,
-                mode='markers',
-                name='True Model',
-                marker=dict(color='green', size=8, opacity=0.6),
-                hovertemplate='Predicted: %{x:.3f} kg/s<br>Residual: %{y:.3f} kg/s<extra></extra>'
-            ),
-            row=2, col=2
-        )
-        
-        fig_results.add_trace(
-            go.Scatter(
-                x=predicted_flow_estimated,
-                y=residuals_estimated,
-                mode='markers',
-                name='Estimated Model',
-                marker=dict(color='red', size=8, opacity=0.6),
-                hovertemplate='Predicted: %{x:.3f} kg/s<br>Residual: %{y:.3f} kg/s<extra></extra>',
-                showlegend=False
-            ),
-            row=2, col=2
-        )
-
-        # Add horizontal line at y=0 for residuals plot
-        fig_results.add_hline(y=0, line_dash="dash", line_color="black", opacity=0.5, row=2, col=2)
-
+      
         # Update layout
         fig_results.update_layout(
-            height=800,
+            height=400,
             title_text="Comprehensive Model Performance Analysis",
             title_x=0.5,
             showlegend=True
@@ -678,43 +618,6 @@ with st.expander("Engine Air Flow Model Parameters",expanded=True):
             st.metric("RMSE (True Model)", f"{rmse_true:.4f}")
         with col4:
             st.metric("RMSE (Estimated Model)", f"{rmse_estimated:.4f}")
-
-        # Performance comparison chart
-        fig_performance = go.Figure()
-        
-        models = ['True Model', 'Estimated Model']
-        r2_scores = [r2_true, r2_estimated]
-        rmse_scores = [rmse_true, rmse_estimated]
-        
-        fig_performance.add_trace(go.Bar(
-            name='R² Score',
-            x=models,
-            y=r2_scores,
-            marker_color=['green', 'red'],
-            opacity=0.7,
-            hovertemplate='Model: %{x}<br>R² Score: %{y:.4f}<extra></extra>'
-        ))
-        
-        fig_performance.add_trace(go.Bar(
-            name='RMSE',
-            x=models,
-            y=rmse_scores,
-            marker_color=['darkgreen', 'darkred'],
-            opacity=0.7,
-            hovertemplate='Model: %{x}<br>RMSE: %{y:.4f}<extra></extra>',
-            yaxis='y2'
-        ))
-        
-        fig_performance.update_layout(
-            title="Model Performance Comparison",
-            xaxis_title="Models",
-            yaxis=dict(title="R² Score", side="left"),
-            yaxis2=dict(title="RMSE", side="right", overlaying="y"),
-            height=400,
-            barmode='group'
-        )
-        
-        st.plotly_chart(fig_performance, use_container_width=True)
 
 
 st.write('Copyright © 2025 Farraen. All rights reserved.')
