@@ -183,12 +183,13 @@ with col24:
 with col34:
     if st.button('Open tool', use_container_width=True,key=15):
         switch_page("Stochastic Variational Inference")
-    image = read_image("images/mtgp_1.png")
+    image = read_image("images/svi.png")
     st.image(image)
     st.subheader('Stochastic Variational Inference')
-    st.write(' This an app example to use Multi-task GP framework to train a GP model from another GP model. ' \
-    'The problem that we want to solve is how we can built a statistical model out of sparse training data and use historical engine data from a similar engine.')
-
+    st.write('SVI (Stochastic Variational Inference) is a powerful technique to train any model or for parameterisation of engineering systems.' \
+    ' It uses variational distribution to approximate the posterior distribution of the model parameters.' \
+    ' It is useful when the training data is too sparse or too complex for parameterisation'
+    ' The output of the process is the optimised parameters as well as the uncertainty of the parameters.')
 
 gap,col14,gap,col24,gap,col34,gap = st.columns([gap_size,1,gap_size,1,gap_size,1,gap_size])
 

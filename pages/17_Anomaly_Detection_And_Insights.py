@@ -91,7 +91,7 @@ def analyse(json_1,add_info):
     if there are anomalies, spikes or instabiltiy in the data, 
     then I would like to analyse the fuel pump pwm data, include any observations about 
     external factor that might affect the degradation of the PWM.
-    If the PWM is clean step, then there is no anomaly. It is anomalous, if it is not a nice step.
+    If the PWM is clean step, then there is no anomaly. It is anomalous if it is doesnt settled with spkies or instability.
     I want the general reason what causing race fuel pump degradation.
     And then convert the analysis and observations into a square matrix to generate a d3graph graph knowledge. 
     The square matrix should show the analysis of the factors affecting the performance. 
@@ -438,7 +438,7 @@ with st.expander('Introduction', expanded=False):
 col1, col2 = st.columns(2)
 with col1:
     with st.container(height=500,border=True):
-        st.subheader("Fuel Pump PWM Simulation")
+        st.write("Fuel Pump PWM Simulation")
         
         # Controls
         # Fixed engine speed
@@ -542,21 +542,17 @@ with col1:
         # Display selected time window
         if 'time_selection' in st.session_state and current_race in st.session_state.time_selection:
             selection = st.session_state.time_selection[current_race]
-            
-            st.metric("Start Time", f"{selection['start']:.3f} ms")
-            st.metric("End Time", f"{selection['end']:.3f} ms")
-            st.metric("Duration", f"{selection['duration']:.3f} ms")
+            st.write(f"Start: {selection['start']:.3f} ms, End: {selection['end']:.3f} ms, Duration: {selection['duration']:.3f} ms")
+
         
 with col2:
     with st.container(height=500,border=True):
-        st.subheader("Data in-sights")
+        st.write("Data in-sights")
 
         # Display selected time window
         if 'time_selection' in st.session_state and current_race in st.session_state.time_selection:
             selection = st.session_state.time_selection[current_race]
-            
-            st.write(f"Start: {selection['start']:.3f} ms, End: {selection['end']:.3f} ms, Duration: {selection['duration']:.3f} ms")
-        
+                    
             # Add text input and button in columns
             col1, col2 = st.columns([3, 1])
             with col1:
@@ -622,8 +618,9 @@ with col2:
                 # Option to download JSON
                 json_str = json.dumps(json_data, indent=2)
 
-                # Pass extra info to analysis
-                modes_1, observations_1, nodes_1, adj_matrix_1, anomaly_detected = analyse(json_data, extra_info if extra_info else "")
+                # Pass extra info to analysis with loading bar
+                with st.spinner("Analyzing PWM data and generating insights..."):
+                    modes_1, observations_1, nodes_1, adj_matrix_1, anomaly_detected = analyse(json_data, extra_info if extra_info else "")
 
                 # Display anomaly alarm
                 if anomaly_detected:
