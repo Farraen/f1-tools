@@ -201,3 +201,12 @@ with col14:
     st.subheader('Anomaly Detection Using Transformer')
     st.write('A page dedicated for new ways of exploring complex and large data, and getting useful insights.It helps to find hidden patterns and relationships in more intuitive manner. For a start, I have combined time-series segmentation, prompt engineerng and knowledge graph to quickly visualise factors affecting a lap time. It is still work in progress but enough as proof of concept.')
 
+
+
+with col24:
+    if st.button('Open tool', use_container_width=True,key=17):
+        switch_page("Anomaly Detection And Insights")
+    image = read_image("images/Image_17.png")
+    st.image(image)
+    st.subheader('Anomaly Detection and Insights')
+    st.write('A page to demonstrate the ability of using foundation models to analyse data and provide insights and root cause analysis for an engine component. It uses fuel pump failure as an example and use AI to determine failure modes and factors contributing to the failure.')
