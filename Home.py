@@ -152,14 +152,44 @@ tools_data = [
         'title': 'Anomaly Detection and Insights',
         'description': 'A page to demonstrate the ability of using foundation models to analyse data and provide insights and root cause analysis for an engine component. It uses fuel pump failure as an example and use AI to determine failure modes and factors contributing to the failure.',
         'category': 'Anomaly Detection'
+    },
+    {
+        'page': 'https://farraen.github.io/streamlit_demo/',
+        'image': 'images/stlite.png',
+        'title': 'Streamlit without Python backend',
+        'description': 'A page to showcase the ability of using streamlit without Python backend. Works by loading Pyodide, Stlite and other libraries directly into browser.',
+        'category': 'Data Analysis'
     }
+
 ]
 
 def render_tool_card(tool, col):
     """Render a single tool card"""
     with col:
-        if st.button('Open tool', use_container_width=True, key=tool['title']):
-            switch_page(tool['page'])
+        if 'https://' in tool['page']:
+            # For external links, create a button that opens in same tab
+            button_html = f"""
+            <div style="margin-bottom: 1rem;">
+                <a href="{tool['page']}" target="_self" style="text-decoration: none;">
+                    <button style="width: 100%; padding: 0.25rem 0.75rem; min-height: 2.5rem;
+                    border: 1px solid rgba(250, 250, 250, 0.2); 
+                    border-radius: 0.5rem; background-color: rgba(255, 255, 255, 0.05); 
+                    color: white; cursor: pointer; font-weight: 400; font-size: 1rem;
+                    font-family: 'Source Sans Pro', sans-serif; transition: all 0.2s ease;">Open tool</button>
+                </a>
+            </div>
+            <style>
+                button:hover {{
+                    background-color: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 75, 75, 0.5);
+                }}
+            </style>
+            """
+            st.markdown(button_html, unsafe_allow_html=True)
+        else:
+            # For internal pages, use switch_page
+            if st.button('Open tool', use_container_width=True, key=tool['title']):
+                switch_page(tool['page'])
         image = read_image(tool['image'])
         st.image(image)
         st.subheader(tool['title'])
