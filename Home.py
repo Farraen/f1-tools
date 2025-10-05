@@ -183,7 +183,7 @@ with col24:
 with col34:
     if st.button('Open tool', use_container_width=True,key=15):
         switch_page("Stochastic Variational Inference")
-    image = read_image("images/svi.png")
+    image = read_image("images/SVI.png")
     st.image(image)
     st.subheader('Stochastic Variational Inference')
     st.write('SVI (Stochastic Variational Inference) is a powerful technique to train any model or for parameterisation of engineering systems.' \
