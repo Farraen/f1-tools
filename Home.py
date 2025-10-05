@@ -26,7 +26,7 @@ if 'view_mode' not in st.session_state:
     st.session_state.view_mode = 'all'
 
 # Add Sort and All buttons
-col_spacer, col_btn1, col_btn2 = st.columns([7, 1, 1])
+col_spacer, col_btn1, col_btn2 = st.columns([5, 1, 1])
 with col_btn1:
     if st.button('Theme', use_container_width=True):
         st.session_state.view_mode = 'sort'
@@ -246,3 +246,7 @@ else:
                 st.write(' ')
             
             st.header(' ')
+
+
+
+st.write('Copyright © 2025 Farraen. All rights reserved.')
