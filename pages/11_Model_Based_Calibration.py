@@ -349,21 +349,23 @@ with st.expander('Step 4: Create engine ML model',expanded=True):
          
 with st.expander('Step 5: Optimise calibration maps',expanded=True):
     st.text("")
-    st.subheader("Optimiser is not ready. Work in progress!")
-    col11, col22, col33 = st.columns([1,1,1],gap='large')  
+    
+    st.text("")
+    col11, col22 = st.columns([1,1],gap='large')  
 
     with col11:
-
         nbpx = st.number_input("Number of x breakpoints",value=5)
         nbpy = st.number_input("Number of y breakpoints",value=5)
 
+    with col22:
+        st.write("Optimise maps:")
         initialise_map = st.button('Initialise')
         optimise = st.button('Optimise')
 
 
+    col11, col22 = st.columns([1,1],gap='large')  
 
-       
-    with col22:    
+    with col11:  
         
         st.text("VGT Map")
 
@@ -376,14 +378,14 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
             fig.update_scenes(xaxis_title_text="Speed",  
                             yaxis_title_text="Torque",  
                             zaxis_title_text="VGT Position")
-            fig.update_layout(margin=dict(l=20, r=20, t=20, b=20),height=300)
+            fig.update_layout(margin=dict(l=20, r=20, t=10, b=10),height=400)
             st_optimise_handle_1.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
             st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
 
 
         
-    with col33:    
+    with col22:    
         st.text("EGR Map")
 
         plot_handle = st.empty()
@@ -394,8 +396,8 @@ with st.expander('Step 5: Optimise calibration maps',expanded=True):
             fig.add_trace(go.Scatter3d(x=[0],y=[0],z=[0],mode='markers'))
             fig.update_scenes(xaxis_title_text="Speed",  
                             yaxis_title_text="Torque",  
-                            zaxis_title_text="VGT Position")
-            fig.update_layout(margin=dict(l=20, r=20, t=20, b=20),height=300)
+                            zaxis_title_text="EGR Position")
+            fig.update_layout(margin=dict(l=20, r=20, t=10, b=10),height=400)
             st_optimise_handle_2.plotly_chart(fig, theme="streamlit",use_container_width=True)
         else:    
             st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
@@ -565,20 +567,26 @@ if initialise_map:
     fig = go.Figure()
     fig.add_trace(go.Surface(z=a,colorscale ='blues'))
     fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    fig.update_scenes(xaxis_title_text="Speed (RPM)", 
+                      yaxis_title_text="Torque (Nm)", 
+                      zaxis_title_text="VGT Position (%)")
     st.session_state.optimise_figure_1 = fig
     st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
 
 
     a = np.array(st.session_state.z_egr).reshape(nbpx,nbpy).tolist()
     fig = go.Figure()
-    fig.add_trace(go.Surface(z=a,colorscale ='blues'))
+    fig.add_trace(go.Surface(z=a,colorscale ='reds'))
     fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    fig.update_scenes(xaxis_title_text="Speed (RPM)", 
+                      yaxis_title_text="Torque (Nm)", 
+                      zaxis_title_text="EGR Position")
     st.session_state.optimise_figure_2 = fig
     st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
 
 
 def rosen(x):
-    """The Rosenbrock function"""
+    """Cost function for VGT optimization"""
     import random
     egr = np.full(np.shape(st.session_state.xl), 0.1)
     
@@ -594,21 +602,58 @@ def rosen(x):
     
     return J
 
+def egr_cost(x):
+    """Cost function for EGR optimization"""
+    import random
+    vgt = np.full(np.shape(st.session_state.xl), 40)
+    
+    x = np.full(np.shape(st.session_state.xl), random.uniform(0.05, 0.34))
+    xhat = pd.DataFrame(
+        {'SPEED_A':st.session_state.xl,'TORQUE_R':st.session_state.yl,'BobOV_XPC_VGT':vgt,'egr_vlv_position':x}
+    )
+    res = st.session_state.engine_model.predict(xhat)
+    df_res_opt = pd.DataFrame(res,columns=outputs)     
+    
+    J = df_res_opt['BSFC_ind'].sum()
+    
+    
+    return J
+
 if optimise:
     
+    # Optimize VGT map
     x0 = st.session_state.z_vgt
     res = minimize(rosen, x0, method='trust-constr',
                options={'maxiter': 10, 'disp': True})
     
     st.session_state.z_vgt = res.x
 
-
     a = np.array(st.session_state.z_vgt).reshape(nbpx,nbpy).tolist()
     fig = go.Figure()
     fig.add_trace(go.Surface(z=a,colorscale ='blues'))
-    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=90))
+    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=20),height=400)
+    fig.update_scenes(xaxis_title_text="Speed (RPM)", 
+                      yaxis_title_text="Torque (Nm)", 
+                      zaxis_title_text="VGT Position (%)")
     st.session_state.optimise_figure_1 = fig
     st_optimise_handle_1.plotly_chart(st.session_state.optimise_figure_1, theme="streamlit",use_container_width=True)
+
+    # Optimize EGR map
+    x0_egr = st.session_state.z_egr
+    res_egr = minimize(egr_cost, x0_egr, method='trust-constr',
+               options={'maxiter': 10, 'disp': True})
+    
+    st.session_state.z_egr = res_egr.x
+
+    a = np.array(st.session_state.z_egr).reshape(nbpx,nbpy).tolist()
+    fig = go.Figure()
+    fig.add_trace(go.Surface(z=a,colorscale ='reds'))
+    fig.update_layout(autosize=True,margin=dict(l=65, r=50, b=65, t=20),height=400)
+    fig.update_scenes(xaxis_title_text="Speed (RPM)", 
+                      yaxis_title_text="Torque (Nm)", 
+                      zaxis_title_text="EGR Position")
+    st.session_state.optimise_figure_2 = fig
+    st_optimise_handle_2.plotly_chart(st.session_state.optimise_figure_2, theme="streamlit",use_container_width=True)
 
 
 if None:
@@ -650,3 +695,6 @@ if None:
     model.save_model("virtual_engine")
     score_train
     score_test
+
+st.write('Copyright © 2025 Farraen. All rights reserved.')
+

@@ -403,7 +403,7 @@ def generate_pump_pwm_with_anomaly(rpm=8000, duration=0.1, num_pulses=10, anomal
     return time, pwm_signal, df_pulses
 
 # Introduction Section
-with st.expander('Introduction', expanded=False):
+with st.expander('Introduction', expanded=True):
     
     col1, col2 = st.columns([0.6,1])
     
