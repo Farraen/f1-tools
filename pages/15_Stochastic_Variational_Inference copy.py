@@ -11,6 +11,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from sklearn.metrics import r2_score
 
 # Page configuration
 st.set_page_config(
@@ -355,24 +356,57 @@ if st.button("Run SVI Training", type="primary"):
     
     # Get estimated parameters
     estimated_params = {}
+    st.write("**Extracted Parameters:**")
     for name, value in pyro.get_param_store().items():
         if isinstance(value, torch.Tensor):
-            estimated_params[name] = value.item()
+            # Handle different tensor shapes
+            if value.numel() == 1:
+                # Single element tensor - convert to scalar
+                estimated_params[name] = value.item()
+                st.write(f"- {name}: {value.item():.4f} (scalar)")
+            elif value.numel() > 1:
+                # Multi-element tensor - take the mean or first element
+                estimated_params[name] = value.mean().item()
+                st.write(f"- {name}: {value.mean().item():.4f} (mean of {value.numel()} elements)")
+            else:
+                # Empty tensor
+                estimated_params[name] = 0.0
+                st.write(f"- {name}: 0.0 (empty tensor)")
         else:
             estimated_params[name] = value
+            st.write(f"- {name}: {value} (non-tensor)")
+    
+    # Show what we're looking for vs what we found
+    st.write("**Parameter Matching:**")
+    st.write(f"Looking for: {list(true_params.keys())}")
+    st.write(f"Found in Pyro store: {list(estimated_params.keys())}")
+    
+    # Check for missing parameters
+    missing_params = set(true_params.keys()) - set(estimated_params.keys())
+    if missing_params:
+        st.warning(f"⚠️ Missing parameters: {missing_params}")
+    else:
+        st.success("✅ All parameters found!")
     
     # Create comparison table
     comparison_data = []
     for param_name in true_params.keys():
         true_val = true_params[param_name]
-        est_val = estimated_params.get(param_name, "N/A")
-        if est_val != "N/A":
+        est_val = estimated_params.get(param_name, None)
+        if est_val is not None and est_val != "N/A":
             error = abs(true_val - est_val) / true_val * 100
             comparison_data.append({
                 "Parameter": param_name,
                 "True Value": true_val,
                 "Estimated Value": est_val,
                 "Error %": f"{error:.2f}%"
+            })
+        else:
+            comparison_data.append({
+                "Parameter": param_name,
+                "True Value": true_val,
+                "Estimated Value": "Not Found",
+                "Error %": "N/A"
             })
     
     if comparison_data:
@@ -413,3 +447,253 @@ if st.button("Run SVI Training", type="primary"):
         
         st.plotly_chart(fig_params, use_container_width=True)
 
+
+
+
+    # Visualization of Results using Plotly
+    # =====================================
+    
+    st.subheader("📊 Model Performance Visualization")
+    
+    # Generate predictions using estimated parameters
+    predicted_flow_estimated = []
+    for i in range(len(engine_speed_data)):
+        pred = airflow_model(
+            engine_speed_data[i], 
+            throttle_data[i],
+            estimated_params.get('flow_coefficient', 0.8),
+            estimated_params.get('pressure_loss_coeff', 0.1),
+            estimated_params.get('thermal_conductivity', 0.2),
+            estimated_params.get('manifold_volume', 2.0)
+        )
+        predicted_flow_estimated.append(pred.item())
+
+    predicted_flow_estimated = np.array(predicted_flow_estimated)
+
+    # Create comprehensive visualization using Plotly subplots
+    fig_results = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=(
+            "Air Flow vs Engine Speed", 
+            "Air Flow vs Throttle Position",
+            "Parameter Comparison", 
+            "Residuals Plot"
+        ),
+        specs=[[{"secondary_y": False}, {"secondary_y": False}],
+               [{"secondary_y": False}, {"secondary_y": False}]]
+    )
+
+    # 1. Air flow vs Engine Speed
+    fig_results.add_trace(
+        go.Scatter(
+            x=engine_speed_data,
+            y=observed_air_flow,
+            mode='markers',
+            name='Observed',
+            marker=dict(color='blue', size=8, opacity=0.6),
+            hovertemplate='Engine Speed: %{x} RPM<br>Air Flow: %{y:.3f} kg/s<extra></extra>'
+        ),
+        row=1, col=1
+    )
+    
+    fig_results.add_trace(
+        go.Scatter(
+            x=engine_speed_data,
+            y=true_air_flow,
+            mode='markers',
+            name='True',
+            marker=dict(color='green', size=8, opacity=0.6),
+            hovertemplate='Engine Speed: %{x} RPM<br>Air Flow: %{y:.3f} kg/s<extra></extra>'
+        ),
+        row=1, col=1
+    )
+    
+    fig_results.add_trace(
+        go.Scatter(
+            x=engine_speed_data,
+            y=predicted_flow_estimated,
+            mode='markers',
+            name='Estimated',
+            marker=dict(color='red', size=8, opacity=0.6),
+            hovertemplate='Engine Speed: %{x} RPM<br>Air Flow: %{y:.3f} kg/s<extra></extra>'
+        ),
+        row=1, col=1
+    )
+
+    # 2. Air flow vs Throttle Position
+    fig_results.add_trace(
+        go.Scatter(
+            x=throttle_data,
+            y=observed_air_flow,
+            mode='markers',
+            name='Observed',
+            marker=dict(color='blue', size=8, opacity=0.6),
+            hovertemplate='Throttle: %{x:.2f}<br>Air Flow: %{y:.3f} kg/s<extra></extra>',
+            showlegend=False
+        ),
+        row=1, col=2
+    )
+    
+    fig_results.add_trace(
+        go.Scatter(
+            x=throttle_data,
+            y=true_air_flow,
+            mode='markers',
+            name='True',
+            marker=dict(color='green', size=8, opacity=0.6),
+            hovertemplate='Throttle: %{x:.2f}<br>Air Flow: %{y:.3f} kg/s<extra></extra>',
+            showlegend=False
+        ),
+        row=1, col=2
+    )
+    
+    fig_results.add_trace(
+        go.Scatter(
+            x=throttle_data,
+            y=predicted_flow_estimated,
+            mode='markers',
+            name='Estimated',
+            marker=dict(color='red', size=8, opacity=0.6),
+            hovertemplate='Throttle: %{x:.2f}<br>Air Flow: %{y:.3f} kg/s<extra></extra>',
+            showlegend=False
+        ),
+        row=1, col=2
+    )
+
+    # 3. Parameter comparison
+    param_names = list(true_params.keys())
+    true_values = [true_params[p] for p in param_names]
+    est_values = [estimated_params.get(p, 0.0) for p in param_names]
+
+    fig_results.add_trace(
+        go.Bar(
+            name='True',
+            x=param_names,
+            y=true_values,
+            marker_color='green',
+            opacity=0.7,
+            hovertemplate='Parameter: %{x}<br>True Value: %{y:.3f}<extra></extra>'
+        ),
+        row=2, col=1
+    )
+    
+    fig_results.add_trace(
+        go.Bar(
+            name='Estimated',
+            x=param_names,
+            y=est_values,
+            marker_color='red',
+            opacity=0.7,
+            hovertemplate='Parameter: %{x}<br>Estimated Value: %{y:.3f}<extra></extra>',
+            showlegend=False
+        ),
+        row=2, col=1
+    )
+
+    # 4. Residuals
+    residuals_true = observed_air_flow - true_air_flow
+    residuals_estimated = observed_air_flow - predicted_flow_estimated
+
+    fig_results.add_trace(
+        go.Scatter(
+            x=true_air_flow,
+            y=residuals_true,
+            mode='markers',
+            name='True Model',
+            marker=dict(color='green', size=8, opacity=0.6),
+            hovertemplate='Predicted: %{x:.3f} kg/s<br>Residual: %{y:.3f} kg/s<extra></extra>'
+        ),
+        row=2, col=2
+    )
+    
+    fig_results.add_trace(
+        go.Scatter(
+            x=predicted_flow_estimated,
+            y=residuals_estimated,
+            mode='markers',
+            name='Estimated Model',
+            marker=dict(color='red', size=8, opacity=0.6),
+            hovertemplate='Predicted: %{x:.3f} kg/s<br>Residual: %{y:.3f} kg/s<extra></extra>',
+            showlegend=False
+        ),
+        row=2, col=2
+    )
+
+    # Add horizontal line at y=0 for residuals plot
+    fig_results.add_hline(y=0, line_dash="dash", line_color="black", opacity=0.5, row=2, col=2)
+
+    # Update layout
+    fig_results.update_layout(
+        height=800,
+        title_text="Comprehensive Model Performance Analysis",
+        title_x=0.5,
+        showlegend=True
+    )
+
+    # Update axes labels
+    fig_results.update_xaxes(title_text="Engine Speed (RPM)", row=1, col=1)
+    fig_results.update_yaxes(title_text="Air Flow Rate (kg/s)", row=1, col=1)
+    fig_results.update_xaxes(title_text="Throttle Position", row=1, col=2)
+    fig_results.update_yaxes(title_text="Air Flow Rate (kg/s)", row=1, col=2)
+    fig_results.update_xaxes(title_text="Parameters", row=2, col=1)
+    fig_results.update_yaxes(title_text="Parameter Value", row=2, col=1)
+    fig_results.update_xaxes(title_text="Predicted Air Flow (kg/s)", row=2, col=2)
+    fig_results.update_yaxes(title_text="Residuals (kg/s)", row=2, col=2)
+
+    st.plotly_chart(fig_results, use_container_width=True)
+
+    # Calculate and display performance metrics
+    st.subheader("📈 Model Performance Metrics")
+    
+    r2_true = r2_score(observed_air_flow, true_air_flow)
+    r2_estimated = r2_score(observed_air_flow, predicted_flow_estimated)
+    rmse_true = np.sqrt(np.mean((observed_air_flow - true_air_flow)**2))
+    rmse_estimated = np.sqrt(np.mean((observed_air_flow - predicted_flow_estimated)**2))
+
+    # Display metrics in columns
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("R² Score (True Model)", f"{r2_true:.4f}")
+    with col2:
+        st.metric("R² Score (Estimated Model)", f"{r2_estimated:.4f}")
+    with col3:
+        st.metric("RMSE (True Model)", f"{rmse_true:.4f}")
+    with col4:
+        st.metric("RMSE (Estimated Model)", f"{rmse_estimated:.4f}")
+
+    # Performance comparison chart
+    fig_performance = go.Figure()
+    
+    models = ['True Model', 'Estimated Model']
+    r2_scores = [r2_true, r2_estimated]
+    rmse_scores = [rmse_true, rmse_estimated]
+    
+    fig_performance.add_trace(go.Bar(
+        name='R² Score',
+        x=models,
+        y=r2_scores,
+        marker_color=['green', 'red'],
+        opacity=0.7,
+        hovertemplate='Model: %{x}<br>R² Score: %{y:.4f}<extra></extra>'
+    ))
+    
+    fig_performance.add_trace(go.Bar(
+        name='RMSE',
+        x=models,
+        y=rmse_scores,
+        marker_color=['darkgreen', 'darkred'],
+        opacity=0.7,
+        hovertemplate='Model: %{x}<br>RMSE: %{y:.4f}<extra></extra>',
+        yaxis='y2'
+    ))
+    
+    fig_performance.update_layout(
+        title="Model Performance Comparison",
+        xaxis_title="Models",
+        yaxis=dict(title="R² Score", side="left"),
+        yaxis2=dict(title="RMSE", side="right", overlaying="y"),
+        height=400,
+        barmode='group'
+    )
+    
+    st.plotly_chart(fig_performance, use_container_width=True)
