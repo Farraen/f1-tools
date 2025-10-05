@@ -265,16 +265,25 @@ def load_images_once_2():
 
     return image1
 
-def create_shared_latent_gp_demo():
-    """Create the shared latent multi-task GP demonstration interface"""
-    
-    st.title("Multi-Task Gaussian Process Engine Modeling")
+def st_title(text):
+    st.markdown(f'<p class="title_medium">{text}</p>', unsafe_allow_html=True)
 
+def st_text(text):
+    st.markdown(f'<p class="text_small">{text}</p>', unsafe_allow_html=True)
+
+
+"""Create the shared latent multi-task GP demonstration interface"""
+
+
+
+st.subheader("Multi-Task Gaussian Process Engine Modeling")
+
+with st.expander('Introduction', expanded=True):
     st.write('Multi-task GP is a framework to allow GPs to share covariance matrix. This enables transfer learning from ' \
     'one GP to another GP model. The application would be to train a GP model with sparse training data from another GP model '\
     'which has higher fidelity. This example would use this framework to train a GP model from another engine GP model. ' \
     'The problem that we want to solve is how we can built a statistical model out of sparse training data and use historical engine data from a similar engine.')
-    
+
     col1, col2 = st.columns(2)
     image1 = load_images_once_1()
     col1.image(image1)
@@ -284,27 +293,24 @@ def create_shared_latent_gp_demo():
 
     st.write("Ref: https://www.researchgate.net/publication/257618558_Focused_multi-task_learning_in_a_Gaussian_process_framework")
 
-    st.markdown("---")
-    st.info("🧠 **True Multi-Task Learning**: Shared latent function with task-specific transformations!")
-    
 
 
-    # Load the virtual engine model
-    try:
-        model_virtual_engine = CatBoostRegressor()
-        model_virtual_engine.load_model("virtual_engine")
-        st.success("✅ Virtual engine model loaded successfully")
-    except:
-        st.error("❌ Could not load virtual engine model. Please ensure 'virtual_engine' file exists.")
-        return
-    
-    # Initialize shared latent multi-task GP
-    if 'shared_latent_gp' not in st.session_state:
-        st.session_state.shared_latent_gp = SharedLatentMultiTaskGP(latent_dim=2)
-    
+
+# Load the virtual engine model
+try:
+    model_virtual_engine = CatBoostRegressor()
+    model_virtual_engine.load_model("virtual_engine")
+except:
+    pass
+
+# Initialize shared latent multi-task GP
+if 'shared_latent_gp' not in st.session_state:
+    st.session_state.shared_latent_gp = SharedLatentMultiTaskGP(latent_dim=2)
+
+with st.expander('Multi-Task GP Training', expanded=True):
     # Main controls
     col1, col2, col3 = st.columns([1, 1, 1], gap='large')
-    
+
     with col1:
         st.write("**GP Training Controls**")
         n_full_samples = st.slider("Full dataset size (Engine A)", 50, 500, 200, key="sl_full")
@@ -340,7 +346,7 @@ def create_shared_latent_gp_demo():
                 st.session_state.y_sparse_sl = y_sparse
                 
                 st.success(f"✅ Generated {n_full_samples} full samples and {n_sparse_samples} sparse samples")
-    
+
     with col2:
         st.write("**Train Shared Latent Multi-Task GP**")
         
@@ -375,7 +381,7 @@ def create_shared_latent_gp_demo():
                 
                 st.success("✅ Shared Latent Multi-Task GP trained successfully!")
                 st.info(f"📈 Engine B pMAX scaled by {scale_factor:.1f}x ({(scale_factor-1)*100:.0f}% {'higher' if scale_factor > 1 else 'lower'})")
-    
+
     with col3:
         st.write("**Analysis Controls**")
         if st.session_state.shared_latent_gp.trained:
@@ -432,7 +438,7 @@ def create_shared_latent_gp_demo():
                     st.success("✅ Sweep data generated! View plots below.")
         else:
             st.info("👆 Please train the Shared Latent Multi-Task GP first.")
-    
+
     # Visualization section
     if st.session_state.shared_latent_gp.trained and 'sl_sweep_data' in st.session_state:
         st.markdown("---")
@@ -442,10 +448,10 @@ def create_shared_latent_gp_demo():
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("Engine A pMAX Range", 
-                     f"{st.session_state.sl_sweep_data['pmax_a'].min():.1f} - {st.session_state.sl_sweep_data['pmax_a'].max():.1f}")
+                        f"{st.session_state.sl_sweep_data['pmax_a'].min():.1f} - {st.session_state.sl_sweep_data['pmax_a'].max():.1f}")
         with col2:
             st.metric("Engine B pMAX Range", 
-                     f"{st.session_state.sl_sweep_data['pmax_b'].min():.1f} - {st.session_state.sl_sweep_data['pmax_b'].max():.1f}")
+                        f"{st.session_state.sl_sweep_data['pmax_b'].min():.1f} - {st.session_state.sl_sweep_data['pmax_b'].max():.1f}")
         with col3:
             rmse = np.sqrt(np.mean((st.session_state.sl_sweep_data['pmax_a'] - st.session_state.sl_sweep_data['pmax_b'])**2))
             st.metric("RMSE between engines", f"{rmse:.1f}")
@@ -634,9 +640,10 @@ def create_shared_latent_gp_demo():
             )
             
             st.plotly_chart(fig_latent, use_container_width=True)
-    
+
     else:
         st.info("👆 Please generate training data and train the Shared Latent Multi-Task GP first.")
 
-if __name__ == "__main__":
-    create_shared_latent_gp_demo()
+
+
+st.write('Copyright © 2025 Farraen. All rights reserved.')
