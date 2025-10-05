@@ -136,6 +136,8 @@ threadpoolctl==3.2.0
 tifffile==2023.12.9
 toml==0.10.2
 toolz==1.0.0
+torch==2.1.0
+torchvision==0.16.0
 tornado==6.4
 tqdm==4.66.1
 trace-updater==0.0.9.1
