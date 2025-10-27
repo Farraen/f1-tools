@@ -167,8 +167,8 @@ tools_data = [
         'description': 'A tool for generating interactive reports from data.',
         'category': 'Data Analysis'
     },
-        {
-        'page': 'Multi',
+    {
+        'page': 'Multi Agent',
         'image': 'images/stlite.png',
         'title': 'Multi Agent Demonstration',
         'description': 'A tool for demonstrating the ability to orchestrate multiple agents to solve a problem.',
@@ -237,7 +237,8 @@ else:
         'Optimisation',
         'Generative Design',
         'Data Analysis',
-        'Anomaly Detection'
+        'Anomaly Detection',
+        'Agentic AI'
     ]
     
     # Display each category
