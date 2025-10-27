@@ -169,7 +169,7 @@ tools_data = [
     },
     {
         'page': 'Multi Agent',
-        'image': 'images/multi_agent.png',
+        'image': 'images/multi_agent.jpg',
         'title': 'Multi Agent Demonstration',
         'description': 'A tool for demonstrating the ability to orchestrate multiple agents to solve a problem.',
         'category': 'Agentic AI'
