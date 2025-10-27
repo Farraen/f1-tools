@@ -1,0 +1,81 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    REQUIREMENTS.TXT GENERATOR                              ║
+║                        Quick Reference                                     ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ METHOD 1: Python Script (Recommended) ───────────────────────────────────┐
+│                                                                            │
+│  conda activate portal                                                     │
+│  python generate_requirements.py                                           │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ METHOD 2: Bash Script (Even Easier) ─────────────────────────────────────┐
+│                                                                            │
+│  conda activate portal                                                     │
+│  ./update_requirements.sh                                                  │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ WHEN TO RUN ──────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  ✓ After installing/updating packages                                     │
+│  ✓ Before deploying to Streamlit Cloud                                    │
+│  ✓ When requirements.txt is out of sync                                   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ TYPICAL WORKFLOW ─────────────────────────────────────────────────────────┐
+│                                                                            │
+│  1. conda activate portal                                                  │
+│  2. pip install new-package                                                │
+│  3. python generate_requirements.py                                        │
+│  4. streamlit run Home.py          # Test locally                          │
+│  5. git add requirements.txt                                               │
+│  6. git commit -m "Update requirements"                                    │
+│  7. git push                        # Deploy                               │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILES CREATED ────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  generate_requirements.py   Main Python script                             │
+│  update_requirements.sh     Bash wrapper (optional)                        │
+│  REQUIREMENTS_GUIDE.md      Detailed documentation                         │
+│  QUICK_START.txt           This file                                       │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ CUSTOMIZATION ────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  To add/remove packages:                                                   │
+│                                                                            │
+│  1. Edit generate_requirements.py                                          │
+│  2. Find ESSENTIAL_PACKAGES list                                           │
+│  3. Add/remove package names                                               │
+│  4. Save and run the script                                                │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ TROUBLESHOOTING ──────────────────────────────────────────────────────────┐
+│                                                                            │
+│  Package not found?                                                        │
+│    → pip install package-name                                              │
+│    → Run script again                                                      │
+│                                                                            │
+│  Wrong environment?                                                        │
+│    → conda activate portal                                                 │
+│    → which python  (verify)                                                │
+│                                                                            │
+│  Script permission denied?                                                 │
+│    → chmod +x generate_requirements.py                                     │
+│    → chmod +x update_requirements.sh                                       │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MORE INFO ────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  Read: REQUIREMENTS_GUIDE.md for detailed documentation                    │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+

@@ -99,7 +99,7 @@ def AddAdditionalTelemetryData(df):
 
 # ----------- UI Section -------------------------
 
-st_title('AI Race Engineer')
+st_title('Multi Agent Demonstration')
 
 st.caption("Optimized for dark mode. To change the theme, access the settings panel by clicking the three dots in the top-right corner of the app.")
 

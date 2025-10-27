@@ -1,6 +1,7 @@
 # Requirements for Streamlit Cloud deployment
-# Updated: 2025
+# Generated: 2025-10-26 23:59:53
 # Curated list of top-level packages
+# Run: python generate_requirements.py to regenerate
 
 altair==5.2.0
 annotated-types==0.6.0
