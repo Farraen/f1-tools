@@ -162,14 +162,14 @@ tools_data = [
     },
     {
         'page': 'Interactive Report Generator',
-        'image': 'images/stlite.png',
+        'image': 'images/interactive.png',
         'title': 'Interactive Report Generator',
-        'description': 'A tool for generating interactive reports from data.',
+        'description': 'A tool for generating interactive reports for more intuitive experience compared to normal excel or pdf reports. This app generates a report showing an engine ML model performance.',
         'category': 'Data Analysis'
     },
     {
         'page': 'Multi Agent',
-        'image': 'images/stlite.png',
+        'image': 'images/multi_agent.png',
         'title': 'Multi Agent Demonstration',
         'description': 'A tool for demonstrating the ability to orchestrate multiple agents to solve a problem.',
         'category': 'Agentic AI'
