@@ -159,8 +159,21 @@ tools_data = [
         'title': 'Streamlit without Python backend',
         'description': 'A page to showcase the ability of using streamlit without Python backend. Works by loading Pyodide, Stlite and other libraries directly into browser.',
         'category': 'Data Analysis'
-    }
-
+    },
+    {
+        'page': 'Interactive Report Generator',
+        'image': 'images/stlite.png',
+        'title': 'Interactive Report Generator',
+        'description': 'A tool for generating interactive reports from data.',
+        'category': 'Data Analysis'
+    },
+        {
+        'page': 'Multi',
+        'image': 'images/stlite.png',
+        'title': 'Multi Agent Demonstration',
+        'description': 'A tool for demonstrating the ability to orchestrate multiple agents to solve a problem.',
+        'category': 'Agentic AI'
+    },
 ]
 
 def render_tool_card(tool, col):
