@@ -27,7 +27,10 @@ if 'pu_fitness_trace' not in st.session_state:
     st.session_state.pu_fitness_trace = []
 
 if 'pu_results' not in st.session_state:
-    st.session_state.pu_results = []
+    st.session_state.pu_results = {}
+elif not isinstance(st.session_state.pu_results, dict):
+    # Convert old list format to dict format
+    st.session_state.pu_results = {}
 
 if 'df_1' not in st.session_state:
     st.session_state.df_1 = []
@@ -186,7 +189,7 @@ def DamageModel(x):
 def plot_results():
 
     # Load last result
-    if isinstance(st.session_state.pu_results, dict):
+    if isinstance(st.session_state.pu_results, dict) and len(st.session_state.pu_results) > 0:
 
         key = list(st.session_state.pu_results)[-1]
         df_best = st.session_state.pu_results[key]
@@ -322,15 +325,31 @@ def change_bias():
 # --------  For optimisation  -------------
 
 def make_full_solution(solution):
-    if not st.session_state.df_1["PU Actual"].isna().all():
-        dff = st.session_state.df_1.copy()
+    dff = st.session_state.df_1.copy()
+    solutionFull = dff["PU Projection"].to_numpy().copy()
+    
+    # First, fill in PU Actual values (races that have been completed)
+    if not dff["PU Actual"].isna().all():
         tracks_left_idx = dff["PU Actual"].isna()
-        actual = dff["PU Actual"].to_numpy()        
-        solutionFull = dff["PU Projection"].to_numpy()
-        solutionFull[~tracks_left_idx] =  actual[~tracks_left_idx]
-        solutionFull[tracks_left_idx] =  solution
-        solution = solutionFull
-    return solution
+        actual = dff["PU Actual"].to_numpy()
+        solutionFull[~tracks_left_idx] = actual[~tracks_left_idx]
+        
+        # For remaining races, use the solution from GA
+        remaining_indices = np.where(tracks_left_idx)[0]
+        for i, idx in enumerate(remaining_indices):
+            solutionFull[idx] = solution[i]
+    else:
+        # No actual values, use the GA solution
+        solutionFull = solution
+    
+    # Then, override with Fresh PU values (user-specified PU assignments)
+    if "Fresh PU" in dff.columns:
+        assigned_pu = dff["Fresh PU"].to_numpy()
+        for idx in range(len(assigned_pu)):
+            if not np.isnan(assigned_pu[idx]):
+                solutionFull[idx] = int(assigned_pu[idx])
+    
+    return solutionFull
 
 def fitness_func(ga_instance, solution, solution_idx):
     
@@ -382,29 +401,51 @@ def optimisation_sequence():
     fitness_function = fitness_func
 
     # Only optimise track with no actual PU results
-    tracks_left = st.session_state.df_1["PU Actual"].isna().sum()
+    df_temp = st.session_state.df_1.copy()
+    tracks_to_optimize_idx = df_temp[df_temp["PU Actual"].isna()].index.tolist()
+    num_genes = len(tracks_to_optimize_idx)
 
-    num_parents_mating = 4
-    sol_per_pop = 5
-    num_genes = int(tracks_left)
+    num_parents_mating = 8
+    sol_per_pop = 20
     st.session_state.pu_iter = 0
 
-    # Check PUs left
-    pu_available = [1,2,3]
-    PU_failed = st.session_state.df_1["PU Failures"].dropna().unique().tolist()
-    for item in PU_failed:
-        if item in pu_available:
-            pu_available.remove(item)
+    # Build gene_space - different available PUs for each race
+    gene_space = []
+    
+    for race_idx in tracks_to_optimize_idx:
+        # Start with all PUs
+        pu_available_for_race = [1, 2, 3]
+        
+        # Remove PUs that failed before this race
+        if race_idx > 0:
+            PU_failed = df_temp.loc[:race_idx-1, "PU Failures"].dropna().unique().tolist()
+            for pu in PU_failed:
+                if int(pu) in pu_available_for_race:
+                    pu_available_for_race.remove(int(pu))
+        
+        # Remove PUs that are assigned to future races (Fresh PU constraint)
+        if "Fresh PU" in df_temp.columns:
+            # Get all races after this one
+            future_races = df_temp.loc[race_idx+1:, "Fresh PU"].dropna().unique().tolist()
+            for pu in future_races:
+                if int(pu) in pu_available_for_race:
+                    pu_available_for_race.remove(int(pu))
+        
+        # If no PUs available for this race, something is wrong
+        if not pu_available_for_race:
+            pu_available_for_race = [1, 2, 3]  # Fallback to all PUs
+        
+        gene_space.append(pu_available_for_race)
                 
-    if not pu_available:
-        st.error("No PU left")
+    if not gene_space or all(len(space) == 0 for space in gene_space):
+        st.error("No PU left to allocate")
     else:
         ga_instance = pygad.GA(num_generations=st.session_state.gen_number,
                         num_parents_mating=num_parents_mating,
                         fitness_func=fitness_function,
                         sol_per_pop=sol_per_pop,
                         num_genes=num_genes,
-                        gene_space=pu_available,
+                        gene_space=gene_space,
                         gene_type=int,
                         on_start=on_start,
                         on_generation=on_generation,
@@ -448,6 +489,11 @@ def reoptimise():
         optimisation_sequence()
         status_placeholder.success('PU allocation is successful', icon="✅")
         time.sleep(0.5)
+    
+    if "Fresh PU" in mode_requested:
+        optimisation_sequence()
+        status_placeholder.success('PU allocation is successful', icon="✅")
+        time.sleep(0.5)
 
 
 #---------- Load in track information -------------
@@ -458,15 +504,17 @@ if not isinstance(st.session_state.df_1,pd.DataFrame):
     df = pd.read_excel('data/Page1_track.xlsx')
     
     st.session_state.df_1 = df.copy()
+    df["Fresh PU"] = np.nan  # User can assign specific PU (1, 2, or 3)
     df["PU Failures"] = np.nan
     df["PU Actual"] = np.nan
     df["PU Projection"] = np.nan
+    
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
     df["PowerLeft"] = PowerLeft["PowerLeft"]
     df["PowerReduced"] = PowerReduced["PowerReduced"]
     df["RUL"] = RUL["RUL"]
 
-
+    df.insert(2, "Fresh PU", df.pop("Fresh PU"))
     df.insert(3, "PU Projection", df.pop("PU Projection"))
     df.insert(3, "PU Actual", df.pop("PU Actual"))
     df.insert(3, "PU Failures", df.pop("PU Failures"))
@@ -479,7 +527,18 @@ if not isinstance(st.session_state.df_1,pd.DataFrame):
 else:
 
     # Simulate and repopulate the master table
-    df = st.session_state.df_1
+    df = st.session_state.df_1.copy()
+    
+    # Backward compatibility: rename Assign PU to Fresh PU or add if doesn't exist
+    if "Assign PU" in df.columns:
+        df.rename(columns={"Assign PU": "Fresh PU"}, inplace=True)
+    elif "Fresh PU" not in df.columns:
+        df.insert(2, "Fresh PU", np.nan)
+    else:
+        # If Fresh PU exists but is boolean (old format), convert to NaN
+        if df["Fresh PU"].dtype == bool:
+            df["Fresh PU"] = np.nan
+    
     Fitness, PowerLoss, PowerLeft, RUL, PowerReduced = DamageModel(df["PU Projection"].to_numpy())
     df["PowerLeft"] = PowerLeft["PowerLeft"]
     df["PowerReduced"] = PowerReduced["PowerReduced"]
@@ -514,6 +573,7 @@ with st.expander('PU selection optimisation',expanded=True):
     st.markdown(
     """
     - :green[Initialise button]: Press to initialise the PU selection at start of the season. Use the GA settings panel to change the decision prioritisation to either performance or durability.
+    - :orange[Fresh PU column]: Assign a specific PU (1, 2, or 3) to a race. The optimizer will ensure that PU is NOT used in any previous races. Use this to force fresh PUs at power tracks.
     - :blue[Actual column]: Use the column with actual selection for completed races and GA will decide the best allocation for the next races. If there is no change, then GA will not trigger.
     - :red[Failure column]: Use the Failure column to exclude failed PU (fill in using PU index 1,2,3,..)
     """
@@ -572,8 +632,6 @@ st.write('Copyright © 2024 Farraen. All rights reserved.')
 
 plot_results()
 plot_iter()
-
-
 
 if start_button:
     optimisation_sequence()
