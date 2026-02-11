@@ -90,7 +90,7 @@ def read_image(img_path):
 # OpenAI 
 @st.cache_resource 
 def connect_openAI():
-    openai_api_key = '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'
+    openai_api_key = st.secrets["OPENAI_API_KEY"]
     openai_client = OpenAI(
         # defaults to os.environ.get("OPENAI_API_KEY")
         api_key=openai_api_key,
