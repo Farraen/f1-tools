@@ -821,4 +821,4 @@ if st.session_state.trained:
     )
 
 st.write('---')
-st.caption('Copyright © 2025 Dr Farraen. All rights reserved.')
+st.caption('Copyright © 2026 Dr Farraen. All rights reserved.')
