@@ -1982,7 +1982,7 @@ with st.expander('RL Agent Settings Status (Read-Only)',expanded=False):
     st.info("💡 To modify these settings, chat with the Chief Engineer. Example: 'Increase performance weight to 0.6' or 'Tell Performance agent to increase power reward scale'.")
 
 
-st.write('Copyright © 2024 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
 
 
 #  ----------- Callbacks and updates ---------------
