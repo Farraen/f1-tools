@@ -326,5 +326,5 @@ with st.expander('Race data to Knowledge Graph',expanded=True):
             bar2.empty()
 
 
-
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
 
