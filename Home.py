@@ -45,106 +45,7 @@ tools_data = [
         'page': 'PU Optimisation',
         'image': 'images/Image_1.png',
         'title': 'PU Selection Decision Engine',
-        'description': 'A decision engine designed to optimize F1 power unit (PU) selection for the entire season. This engine utilizes a genetic algorithm as the optimizer and incorporates an artificial damage model to assess vehicle performance degradation.x',
-        'category': 'Strategy & Optimization'
-    },
-    {
-        'page': 'PU Optimisation LLM',
-        'image': 'images/Image_2.png',
-        'title': 'PU Decision Engine + AI Race Engineer',
-        'description': 'The same PU decision engine dashboard is now powered by a Large Language Model (LLM). It can provide recommendations based on the current PU strategy situation. The LLM persona is tuned to mimic a junior race engineer.',
-        'category': 'Strategy & Optimization'
-    },
-    {
-        'page': 'EV Race Car Optimiser',
-        'image': 'images/Image_12.png',
-        'title': 'EV Race Car Optimiser',
-        'description': 'A tool optimising EV race car parameters to get most efficient lap times.',
-        'category': 'Optimisation'
-    },
-    {
-        'page': 'Lap Time Prediction',
-        'image': 'images/Image_11.jpg',
-        'title': 'Lap Time Predictor',
-        'description': 'A tool for predicting vehicle lap time over a circuit using machine learning.',
-        'category': 'Strategy & Optimization'
-    },
-    {
-        'page': 'Combustion Strategy',
-        'image': 'images/Image_4.png',
-        'title': 'Model Parameter Tuner',
-        'description': 'A tool for parameterising models (such as combustion or exhaust temperature model) for sensorless systems. It is a simple tool for filling in model parameters to match as measured data from a physical sensor.',
-        'category': 'Optimisation'
-    },
-    {
-        'page': 'Generative Design',
-        'image': 'images/Image_6.png',
-        'title': 'Generative Design',
-        'description': 'A decision engine demonstrator for assisting engineers in powertrain design selection. Using AI and machine learning models to make fast decisions based on user design criteria.',
-        'category': 'Generative Design'
-    },
-    {
-        'page': 'Tire Strategy',
-        'image': 'images/Image_7.png',
-        'title': 'Tire Strategy',
-        'description': 'A decision engine platform for tyre change strategy. It can help race engineers predict the optimal lap for tyre change and compound selection. Genetic algorithm is used as the decision engine to generate tyre change solutions.',
-        'category': 'Strategy & Optimization'
-    },
-    {
-        'page': 'Prognostics',
-        'image': 'images/Image_8.png',
-        'title': 'Prognostics',
-        'description': 'A simple dashboard to investigate early failures from race telemetry data.',
-        'category': 'Anomaly Detection'
-    },
-    {
-        'page': 'Data Mining',
-        'image': 'images/Image_10.png',
-        'title': 'Data Mining (Under development)',
-        'description': 'A data exploration tool for finding underlying patterns and trends.',
-        'category': 'Data Analysis'
-    },
-    {
-        'page': 'Model Based Calibration',
-        'image': 'images/Image_3.png',
-        'title': 'Model Based Calibration Methodology',
-        'description': '(Under development) Model-based Calibration is a process for optimally tuning system parameters. It involves creating a Design of Experiments (DoE), developing models, and performing optimization.',
-        'category': 'Optimisation'
-    },
-    {
-        'page': 'Anomaly Estimation',
-        'image': 'images/Image_5.png',
-        'title': 'Anomaly Detection Testing Tool',
-        'description': 'A tool for training a ML classifier for detecting anomalies in vehicle measurement data.',
-        'category': 'Anomaly Detection'
-    },
-    {
-        'page': 'Other Ways of Visualising Data',
-        'image': 'images/big_data.png',
-        'title': 'Data Visualisation',
-        'description': 'A page dedicated for new ways of exploring complex and large data, and getting useful insights.It helps to find hidden patterns and relationships in more intuitive manner. For a start, I have combined time-series segmentation, prompt engineerng and knowledge graph to quickly visualise factors affecting a lap time. It is still work in progress but enough as proof of concept.',
-        'category': 'Data Analysis'
-    },
-    {
-        'page': 'Multi Task GP',
-        'image': 'images/mtgp_1.png',
-        'title': 'Multi Task GP Model',
-        'description': 'This an app example to use Multi-task GP framework to train a GP model from another GP model. The problem that we want to solve is how we can built a statistical model out of sparse training data and use historical engine data from a similar engine.',
-        'category': 'Optimisation'
-    },
-    {
-        'page': 'Variational Inference',
-        'image': 'images/SVI.png',
-        'title': 'Variational Inference',
-        'description': 'Variational Inference is a powerful technique to train any model or for parameterisation of engineering systems. It uses variational distribution to approximate the posterior distribution of the model parameters. It is useful when the training data is too sparse or too complex for parameterisation The output of the process is the optimised parameters as well as the uncertainty of the parameters.',
-        'category': 'Optimisation'
-    },
-tools_data = [
-    {
-        'page': 'PU Optimisation',
-        'image': 'images/Image_1.png',
-        'title': 'PU Selection Decision Engine',
-        'description': 'A decision engine designed to optimise F1 power unit (PU) selection for the entire season. This engine utilises a genetic algorithm as the optimiser and incorporates an artificial damage model to assess vehicle performance degradation.',
+        'description': 'A decision engine designed to optimise 2016 F1 power unit (PU) selection for the entire season. This engine utilises a genetic algorithm as the optimiser and incorporates an artificial damage model to assess vehicle performance degradation.',
         'category': 'Strategy & Optimization'
     },
     {
@@ -274,6 +175,8 @@ tools_data = [
         'category': 'Agentic AI'
     },
 ]
+
+
 
 def render_tool_card(tool, col):
     """Render a single tool card"""
