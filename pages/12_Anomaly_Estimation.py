@@ -572,4 +572,4 @@ estimator7_placeholder.text(f'7. Features: ' + ", ".join(st.session_state.featur
 
 
 
-st.write('Copyright © 2024 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
