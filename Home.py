@@ -133,10 +133,10 @@ tools_data = [
         'category': 'Optimisation'
     },
     {
-        'page': 'Stochastic Variational Inference',
+        'page': 'Variational Inference',
         'image': 'images/SVI.png',
-        'title': 'Stochastic Variational Inference',
-        'description': 'SVI (Stochastic Variational Inference) is a powerful technique to train any model or for parameterisation of engineering systems. It uses variational distribution to approximate the posterior distribution of the model parameters. It is useful when the training data is too sparse or too complex for parameterisation The output of the process is the optimised parameters as well as the uncertainty of the parameters.',
+        'title': 'Variational Inference',
+        'description': 'Variational Inference is a powerful technique to train any model or for parameterisation of engineering systems. It uses variational distribution to approximate the posterior distribution of the model parameters. It is useful when the training data is too sparse or too complex for parameterisation The output of the process is the optimised parameters as well as the uncertainty of the parameters.',
         'category': 'Optimisation'
     },
     {
