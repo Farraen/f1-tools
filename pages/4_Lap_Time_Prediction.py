@@ -171,6 +171,6 @@ with st.expander('Lap time prediction',expanded=True):
     mplt.axis('equal')
     st.pyplot(mplt)
 
-
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
 #st.write('Copyright © 2024 Farraen. All rights reserved.')
 
