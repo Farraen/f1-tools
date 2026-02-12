@@ -844,4 +844,4 @@ with col1:
             )
             st.plotly_chart(fig_next_original)
 
-
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
