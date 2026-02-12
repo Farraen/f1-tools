@@ -265,4 +265,4 @@ else:
 
 
 
-st.write('Copyright © 2025 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen Mohd Azmin. All rights reserved.')
