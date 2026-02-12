@@ -696,5 +696,5 @@ if None:
     score_train
     score_test
 
-st.write('Copyright © 2025 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
 
