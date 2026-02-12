@@ -14,7 +14,7 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 st.title('Interactive Report Generator')
 
 st.caption(
-    "An app that shows how interactive reports can be generated using Streamlit and Plotly. This example uses CatBoost as the model candidate."
+    "An app that shows how interactive reports can be generated using Streamlit and Plotly. This example uses CatBoost as the model candidate. You need to press the 'Train Model' button before saving the results in an interactive report."
 )
 
 # Initialize session state
@@ -821,4 +821,4 @@ if st.session_state.trained:
     )
 
 st.write('---')
-st.caption('Copyright © 2025 Farraen. All rights reserved.')
+st.caption('Copyright © 2025 Dr Farraen. All rights reserved.')
