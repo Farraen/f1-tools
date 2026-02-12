@@ -401,4 +401,4 @@ if st.session_state.solutions_tire:
 #time_placeholder.write(f'- {t_total_race:.2f} minutes')
 
 
-
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
