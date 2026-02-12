@@ -620,4 +620,4 @@ with st.expander("Engine Air Flow Model Parameters",expanded=True):
             st.metric("RMSE (Estimated Model)", f"{rmse_estimated:.4f}")
 
 
-st.write('Copyright © 2025 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
