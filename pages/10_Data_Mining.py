@@ -465,4 +465,4 @@ analysis_2_placeholder.plotly_chart(fig2, theme="streamlit",height=500)
 
 
 
-st.write('Copyright © 2024 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
