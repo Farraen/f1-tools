@@ -16,7 +16,7 @@ from PIL import Image
 
 # Page configuration
 st.set_page_config(
-    page_title="F1 Tools - Stochastic Variational Inference",
+    page_title="F1 Tools - Variational Inference",
     layout="wide"
 )
 
