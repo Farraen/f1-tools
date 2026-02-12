@@ -1432,4 +1432,4 @@ with st.expander('Sanity check', expanded=False):
             st.plotly_chart(fig5, use_container_width=True)
 
 
-st.write('Copyright © 2025 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
