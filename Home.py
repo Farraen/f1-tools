@@ -45,7 +45,7 @@ tools_data = [
         'page': 'PU Optimisation',
         'image': 'images/Image_1.png',
         'title': 'PU Selection Decision Engine',
-        'description': 'A decision engine designed to optimise 2016 F1 power unit (PU) selection for the entire season. This engine utilises a genetic algorithm as the optimiser and incorporates an artificial damage model to assess vehicle performance degradation.',
+        'description': 'A decision engine designed to optimise 2018 F1 power unit (PU) selection for the entire season. This engine utilises a genetic algorithm as the optimiser and incorporates an artificial damage model to assess vehicle performance degradation.',
         'category': 'Strategy & Optimization'
     },
     {
