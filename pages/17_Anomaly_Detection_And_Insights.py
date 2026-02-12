@@ -658,4 +658,4 @@ with col2:
         else:
             st.write("Select a time window by dragging on the left side plot to start interrogating the signal. Pick those with anomalies.")
 
-st.write('Copyright © 2025 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
