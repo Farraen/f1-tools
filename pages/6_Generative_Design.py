@@ -578,4 +578,4 @@ if isinstance(df,pd.DataFrame):
     pareto_placeholder.plotly_chart(fig, theme="streamlit", use_container_width=True,height=400)  
 
 
-st.write('Copyright © 2024 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
