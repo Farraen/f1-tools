@@ -374,4 +374,4 @@ plot_fitness()
 
 
 
-st.write('Copyright © 2024 Farraen. All rights reserved.')
+st.write('Copyright © 2026 Dr Farraen. All rights reserved.')
