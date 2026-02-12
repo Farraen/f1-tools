@@ -13,7 +13,9 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
 st.title('Interactive Report Generator')
 
-st.caption("An app to show how interactive reports can be generated using Streamlit and Plotly. This example is using catboost as model candidate.")
+st.caption(
+    "An app that shows how interactive reports can be generated using Streamlit and Plotly. This example uses CatBoost as the model candidate."
+)
 
 # Initialize session state
 if 'model' not in st.session_state:
